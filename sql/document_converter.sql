@@ -10,9 +10,17 @@ drop type if exists DocValue;
 drop type if exists DocComponentArray;	
 drop type if exists DocComponent;
 
-@DocComponent.sql
-@DocValue.sql
-@DocElement.sql
-@DocPrimitiveElement.sql
-@DocArrayElement.sql
-@DocDocumentElement.sql
+@doc_conv_consts.sql
+
+@DocComponent.pls
+@DocValue.pls
+@DocElement.pls
+@DocPrimitiveElement.pls
+@DocArrayElement.pls
+@DocDocumentElement.pls
+
+@DocValue.plb
+@DocElement.plb
+@DocPrimitiveElement.plb
+@DocArrayElement.plb
+@DocDocumentElement.plb
