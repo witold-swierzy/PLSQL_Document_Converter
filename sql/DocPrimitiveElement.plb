@@ -1,3 +1,7 @@
+-- component : DocPrimitiveElement class body
+-- type      : PL/SQL class
+-- author    : witold.swierzy@oracle.com
+-- this is class used to store primitive document elements
 create or replace type body DocPrimitiveElement 
 as
 	constructor function DocPrimitiveElement(eName varchar2,cval varchar2) return self as result
@@ -66,42 +70,33 @@ as
 		return elemValue.getAsVarchar2;
 	end;
 	
-	overriding member function toString    return clob
+	overriding member function toString(fmt integer)    return clob
 	is
 		return_value clob;
 	begin
-		return_value := '"'||elemName||'":';
-		if getValueType = DBMS_TYPES.TYPECODE_VARCHAR2 then
-			return_value := return_value||'"'||elemValue.getAsVarchar2||'"';
-		elsif getValueType = DBMS_TYPES.TYPECODE_NUMBER then
-			return_value := return_value||to_char(elemValue.getAsNumber);
-		elsif getValueType = DBMS_TYPES.TYPECODE_DATE then
-			return_value := return_value||'"'||to_char(elemValue.getAsDate)||'"';	
+		if fmt = doc_conv_consts.fmt_json_primitive then
+			return_value := '"'||elemName||'":'||elemValue.toString(doc_conv_consts.fmt_json);
+        elsif fmt = doc_conv_consts.fmt_json then
+        	return_value := '{"'||elemName||'":'||elemValue.toString(fmt)||'}';
+		elsif fmt = doc_conv_consts.fmt_xml then
+			return_value := '<'||elemName||'>'||elemValue.toString(fmt)||'</'||elemName||'>';
+		else
+			raise_application_error(doc_conv_consts.e_unknown_fmt_no,
+			                        doc_conv_consts.e_unknown_fmt_msg);
 		end if;
 		return return_value;
 	end;
 	
     overriding member function getAsXMLType        return XMLType
     is
-        clob_value clob;
     begin
-       clob_value := '<'||elemName||'>'||getAsVarchar2||'</'||elemName||'>';
-       return XMLType(clob_value);
+       return XMLType(toString(doc_conv_consts.fmt_xml));
     end;
     
     overriding member function getAsJSON_ELEMENT_T return JSON_ELEMENT_T
     is
-		clob_value clob;
 	begin
-		clob_value := '"'||elemName||'":';
-		if getValueType = DBMS_TYPES.TYPECODE_VARCHAR2 then
-			clob_value := clob_value||'"'||elemValue.getAsVarchar2||'"';
-		elsif getValueType = DBMS_TYPES.TYPECODE_NUMBER then
-			clob_value := clob_value||to_char(elemValue.getAsNumber);
-		elsif getValueType = DBMS_TYPES.TYPECODE_DATE then
-			clob_value := clob_value||'"'||to_char(elemValue.getAsDate)||'"';	
-		end if;
-        return JSON_ELEMENT_T.parse('{'||clob_value||'}');
+        return JSON_ELEMENT_T.parse(toString(doc_conv_consts.fmt_json));
     end;
     
     

@@ -6,8 +6,9 @@
 
 create or replace type DocComponent as object (
 	compId integer,
-	not instantiable member function getComponentType  return integer,
-	not instantiable member function getValueType return integer
+	not instantiable member function getComponentType      return integer,
+	not instantiable member function getValueType          return integer,
+	not instantiable member function toString(fmt integer) return clob
 )
 not instantiable not final;
 /

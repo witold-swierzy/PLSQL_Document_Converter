@@ -49,13 +49,3 @@ is
     end;
 end;
 /
-
-declare
-	x XMLType := XMLType('<el1>value</el1>');
-	z DocPrimitiveElement;
-begin
-	z := DocPrimitiveElement(x);
-	dbms_output.put_line(z.toString);
-end;
- /
-select 

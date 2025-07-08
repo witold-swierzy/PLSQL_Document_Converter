@@ -11,10 +11,11 @@ create or replace type DocValue under DocComponent (
 	constructor function DocValue(cval number) return self as result,
 	constructor function DocValue(cval date) return self as result,
 	
-	overriding member function getComponentType return integer,
-	overriding member function getValueType     return integer,
+	overriding member function getComponentType      return integer,
+	overriding member function getValueType          return integer,
+	overriding member function toString(fmt integer) return clob,
 	
-	member function getAsVarchar2 return varchar2,
+	member function getAsVarchar2 return clob,
 	member function getAsNumber   return number,
 	member function getAsDate     return date
 	

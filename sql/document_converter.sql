@@ -11,6 +11,7 @@ drop type if exists DocComponentArray;
 drop type if exists DocComponent;
 
 @doc_conv_consts.sql
+@doc_conv_utils.sql
 
 @DocComponent.pls
 @DocValue.pls
@@ -18,6 +19,8 @@ drop type if exists DocComponent;
 @DocPrimitiveElement.pls
 @DocArrayElement.pls
 @DocDocumentElement.pls
+
+@DocComponentArray.sql
 
 @DocValue.plb
 @DocElement.plb

@@ -4,7 +4,6 @@
 -- this class is used to store whole documents with all their components:
 -- primitives, arrays and nested documents
 
-
 create or replace type body DocDocumentElement 
 as
 	constructor function DocDocumentElement return self as result
@@ -65,26 +64,50 @@ as
 		return doc_conv_consts.val_type_na;
 	end;
 	
-	overriding member function toString         return clob
+	overriding member function toString(fmt integer) return clob
 	is		
 		result    clob;
 	begin
-		if elemName is not null then
-			result := '"'||elemName||'":{';
-		else
-			result := '{';
-		end if;
-		
-		for i in 1..valArray.last loop
-			if i > 1 then
-				result := result||',';
-			end if;
-			result := result||treat(ValArray(i) as DocElement).toString;
-		end loop;
-		result := result || '}';
+        if fmt = doc_conv_consts.fmt_json then
+            result := '{';
+            
+            for i in 1..valArray.last loop
+                if i > 1 then
+                    result := result||',';
+                end if;
+                if valArray(i).getComponentType <> doc_conv_consts.comp_type_primitive then
+                    result := result||'"'||treat(valArray(i) as DocElement).getName||'":'||valArray(i).toString(fmt);
+                else
+                    result := result||valArray(i).toString(doc_conv_consts.fmt_json_primitive);
+                end if;
+            end loop;
+            result := result || '}';
+        elsif fmt = doc_conv_consts.fmt_xml then
+            result := '<'||elemName||'>';
+            for i in 1..valArray.last loop
+                result := result||valArray(i).toString(fmt);
+            end loop;
+            result := result||'</'||elemName||'>';
+        else
+            raise_application_error(doc_conv_consts.e_unknown_fmt_no,
+			                        doc_conv_consts.e_unknown_fmt_msg);
+        end if;
 		return result;
+	end;
+
+	overriding member function getAsXMLType return XMLType
+	is
+	begin
+		return null;
+	end;
+
+    overriding member function getAsJSON_ELEMENT_T  return JSON_ELEMENT_T
+	is
+	begin
+		return null;
 	end;
 end;
 /	
+
 
 

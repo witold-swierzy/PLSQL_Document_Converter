@@ -2,6 +2,11 @@
 -- type      : PL/SQL class
 -- author    : witold.swierzy@oracle.com
 -- this class is used to store a single value in a document
+-- component : DocValue
+-- type      : PL/SQL class
+-- author    : witold.swierzy@oracle.com
+-- this class is used to store a single value in a document
+
 
 create or replace type body DocValue 
 as
@@ -41,12 +46,40 @@ as
 		return compValueType;
 	end;
 	
-	member function getAsVarchar2 return varchar2
+	overriding member function toString(fmt integer) return clob
+	is
+        result          integer;
+		return_value    clob;
+        return_value_dt date;
+	begin
+        if compValueType = DBMS_TYPES.TYPECODE_DATE then
+            result := compValue.getdate(return_value_dt);
+            return_value := to_char(return_value_dt);
+        else
+            result := compValue.getvarchar2(return_value);
+        end if;
+		if fmt = doc_conv_consts.fmt_json 
+		and compValueType in (DBMS_TYPES.TYPECODE_VARCHAR2,
+		                      DBMS_TYPES.TYPECODE_DATE) 
+		then	
+			return_value := '"'||return_value||'"';
+		end if;
+
+		return return_value;
+	end;
+
+	member function getAsVarchar2 return clob
 	is
 		result integer;
-		return_value varchar2(32767);
+		return_value clob;
+        return_value_dt date;
 	begin
-		result := compValue.getvarchar2(return_value);
+        if compValueType = DBMS_TYPES.TYPECODE_DATE then
+            result := compValue.getdate(return_value_dt);
+            return_value := to_char(return_value_dt);
+        else
+            result := compValue.getvarchar2(return_value);
+        end if;
 		return return_value;
 	end;
 	
