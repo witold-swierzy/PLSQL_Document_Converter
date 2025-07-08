@@ -16,22 +16,22 @@ declare
 begin
 	--dbms_output.put_line(doc1.toString(doc_conv_consts.fmt_json));
 	--dbms_output.put_line(doc1.toString(doc_conv_consts.fmt_json_primitive));
-	--doc4.addComponent(doc1);
-	--doc4.addComponent(doc2);
-	--doc4.addComponent(doc3);
+	doc6.addElement(doc1);
+	doc6.addElement(doc2);
+	doc6.addElement(doc3);
 	--dbms_output.put_line(doc4.toString(doc_conv_consts.fmt_json));
 	--dbms_output.put_line(doc4.toString(doc_conv_consts.fmt_xml));
 	--t := doc4.getAsJSON_ELEMENT_T;
-	--x := doc4.getAsXMLType;
+	x := doc6.getAsXMLType;
 	--dbms_output.put_line(t.to_String);
-	--dbms_output.put_line(x.getclobval);
+	dbms_output.put_line(x.getclobval);
 	--dbms_output.put_line(doc1.toString(doc_conv_consts.fmt_json));
 	--dbms_output.put_line(doc1.toString(doc_conv_consts.fmt_json_primitive));
 	--doc5.addComponent(val1);
 	--doc5.addComponent(val2);
-	doc6.addElement(doc1);
-	doc6.addElement(doc2);
-	dbms_output.put_line(doc6.tostring(doc_conv_consts.fmt_json));
-	dbms_output.put_line(doc6.tostring(doc_conv_consts.fmt_xml));
+	--doc6.addElement(doc1);
+	--doc6.addElement(doc2);
+	--dbms_output.put_line(doc6.tostring(doc_conv_consts.fmt_json));
+	--dbms_output.put_line(doc6.tostring(doc_conv_consts.fmt_xml));
 end;
 /

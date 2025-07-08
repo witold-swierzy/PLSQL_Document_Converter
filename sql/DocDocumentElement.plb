@@ -3,7 +3,6 @@
 -- author    : witold.swierzy@oracle.com
 -- this class is used to store whole documents with all their components:
 -- primitives, arrays and nested documents
-
 create or replace type body DocDocumentElement 
 as
 	constructor function DocDocumentElement return self as result
@@ -98,16 +97,13 @@ as
 	overriding member function getAsXMLType return XMLType
 	is
 	begin
-		return null;
+		return XMLType(toString(doc_conv_consts.fmt_xml));
 	end;
 
     overriding member function getAsJSON_ELEMENT_T  return JSON_ELEMENT_T
 	is
 	begin
-		return null;
+		return JSON_OBJECT_T.parse(toString(doc_conv_consts.fmt_json));
 	end;
 end;
 /	
-
-
-
