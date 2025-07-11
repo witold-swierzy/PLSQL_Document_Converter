@@ -27,7 +27,24 @@ as
     
     constructor function DocArray(jDoc JSON_ELEMENT_T) return self as result
     is
+        jClob  clob;
+        jArr   JSON_ARRAY_T := JSON_ARRAY_T(jDoc);
+        jElem  JSON_ELEMENT_T;
+        l      number(38) := jArr.get_Size;
     begin
+        vals := CompArray();
+        for i in 0..l-1 loop
+            vals.extend;
+            jElem := jArr.get(i);
+            if jElem.is_object then
+                vals(vals.count) := DocElement(jElem);
+            elsif jElem.is_array then
+                vals(vals.count) := DocArray(jElem);
+            elsif jElem.is_scalar then
+                jClob := jElem.to_Clob;
+                vals(vals.count) := DocValue(jClob,doc_utl.scalar_type(jClob));
+            end if;
+        end loop;
         return;
     end;
 

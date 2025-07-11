@@ -153,3 +153,12 @@ begin
 end;
 /
 
+-- 8. DocElement JSON_ELEMENT_T constructor
+declare
+    j1 JSON_ELEMENT_T := JSON_ELEMENT_T.parse('{"abra1":"kadabra","abra2":{"nabra2":"kadabra2"},"abra3":["arr1","arr2"]}');
+    d1 DocElement := DocElement(j1);
+    x1 XMLType := d1.getAsXML;
+begin
+    dbms_output.put_line(x1.getclobval);
+end;
+/

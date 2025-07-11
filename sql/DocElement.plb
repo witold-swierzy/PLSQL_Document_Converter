@@ -75,8 +75,31 @@ as
 
     constructor function DocElement(jDoc JSON_ELEMENT_T) return self as result
     is
+       jClob  clob;
+       jObj   JSON_OBJECT_T := JSON_OBJECT_T(jDoc);
+       jElem  JSON_ELEMENT_T;
     begin
-      return;  
+       keys := KeyArray();
+       vals := CompArray();
+       jKeys := jObj.get_keys;
+            
+       for i in jKeys.first..jKeys.last loop
+            keys.extend;
+            vals.extend;
+            jElem := jObj.get(jKeys(i));
+            if jElem.is_object then
+                keys(keys.count) := jKeys(i);
+                vals(vals.count) := DocElement(jElem);
+            elsif jElem.is_array then
+                keys(keys.count) := jKeys(i);
+                vals(vals.count) := DocArray(jElem);
+            elsif jElem.is_scalar then
+                keys(keys.count) := jKeys(i);
+                jClob := jElem.to_Clob;
+                vals(vals.count) := DocValue(jClob,doc_utl.scalar_type(jClob));
+            end if;
+       end loop;
+       return;
     end;
 
     member procedure addComponent(kName clob,kValue DocComponent)
