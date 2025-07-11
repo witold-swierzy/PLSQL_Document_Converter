@@ -1,37 +1,40 @@
--- component : demonstration code
--- type      : anonymous PL/SQL block
--- author    : witold.swierzy@oracle.com
+-- 1. creation of XML object table
+drop table if exists sample_xml_table;
+drop view if exists json_doc;
 
-declare
-	val1 DocValue := DocValue(123);
-	val2 DocValue := DocValue(345);
-	doc1 DocPrimitiveElement := DocPrimitiveElement('alice','has_cats');
-	doc2 DocPrimitiveElement := DocPrimitiveElement('how_many_cats',14);
-	doc3 DocPrimitiveElement := DocPrimitiveElement('today',sysdate);
-	doc4 DocArrayElement     := DocArrayElement('array01');
-	doc5 DocArrayElement     := DocArrayElement('array02');
-	doc6 DocDocumentElement  := DocDocumentElement('Document01');
-	t json_element_t;
-	x XMLType;
+create table sample_xml_table of XMLType;
+
+insert into sample_xml_table 
+values (XMLType('<abra>kadabra</abra>'));
+
+insert into sample_xml_table
+values (XMLType('<abra1><abra2>kadabra</abra2></abra1>'));
+
+insert into sample_xml_table
+values (
+'<kadabra>
+    <abra1>aaa</abra1>
+    <abra1>bbb</abra1>
+    <abra1>ccc</abra1>
+</kadabra>');
+
+commit;
+
+create or replace function xml2json(xDoc XMLType) return json
+is
+    j JSON_ELEMENT_T := DocElement(xDoc).getAsJSON;
 begin
-	--dbms_output.put_line(doc1.toString(doc_conv_consts.fmt_json));
-	--dbms_output.put_line(doc1.toString(doc_conv_consts.fmt_json_primitive));
-	doc6.addElement(doc1);
-	doc6.addElement(doc2);
-	doc6.addElement(doc3);
-	--dbms_output.put_line(doc4.toString(doc_conv_consts.fmt_json));
-	--dbms_output.put_line(doc4.toString(doc_conv_consts.fmt_xml));
-	--t := doc4.getAsJSON_ELEMENT_T;
-	x := doc6.getAsXMLType;
-	--dbms_output.put_line(t.to_String);
-	dbms_output.put_line(x.getclobval);
-	--dbms_output.put_line(doc1.toString(doc_conv_consts.fmt_json));
-	--dbms_output.put_line(doc1.toString(doc_conv_consts.fmt_json_primitive));
-	--doc5.addComponent(val1);
-	--doc5.addComponent(val2);
-	--doc6.addElement(doc1);
-	--doc6.addElement(doc2);
-	--dbms_output.put_line(doc6.tostring(doc_conv_consts.fmt_json));
-	--dbms_output.put_line(doc6.tostring(doc_conv_consts.fmt_xml));
+    return JSON(j.to_Clob);
 end;
 /
+
+select value(x) from sample_xml_table x;
+select xml2json(value(x)) from sample_xml_table x;
+
+select xml2json(value(t)) json_col, value(t) xml_col
+from sample_xml_table t;
+
+create or replace json collection view json_v
+as 
+select xml2json(value(t)) data
+from sample_xml_table t;

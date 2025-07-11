@@ -1,16 +1,19 @@
--- component : DocElement class specification
--- type      : PL/SQL class
--- author    : witold.swierzy@oracle.com
--- this is abstract class used as a root for all classes defining document elements:
--- primitives, arrays and nested documents
-
 create or replace type DocElement under DocComponent (
-	elemName varchar2(32767),
+    keys KeyArray,
+    vals CompArray,
 
-    not instantiable member function getAsXMLType return XMLType,
-    not instantiable member function getAsJSON_ELEMENT_T  return JSON_ELEMENT_T,
-	
-	member function getName return varchar2
-)
-not instantiable not final;
+    constructor function DocElement return self as result,
+    constructor function DocElement(kName clob, kValue DocComponent) return self as result,
+    constructor function DocElement(xDoc XMLType) return self as result,
+    constructor function DocElement(jDoc JSON_ELEMENT_T) return self as result,
+    
+    member procedure addComponent(kName clob,kValue DocComponent),
+    member function getLength return integer,
+    
+    member function getAsXML  (rName clob := null, eName clob := null, aName clob := null) return XMLType,
+    member function getAsJSON (rName clob := null, eName clob := null, aName clob := null) return JSON_ELEMENT_T,
+
+    overriding member function getComponentType return integer,
+    overriding member function toString(fmt integer, eName clob := null, aName clob := null) return clob 
+);
 /

@@ -1,105 +1,65 @@
--- component : DocValue
--- type      : PL/SQL class
--- author    : witold.swierzy@oracle.com
--- this class is used to store a single value in a document
--- component : DocValue
--- type      : PL/SQL class
--- author    : witold.swierzy@oracle.com
--- this class is used to store a single value in a document
-
-
 create or replace type body DocValue 
 as
-	constructor function DocValue(cval varchar2) return self as result
-	is
-	begin
-		compValue     := AnyData.convertvarchar2(cval);
-		compValueType := DBMS_TYPES.TYPECODE_VARCHAR2;
-		return;
-	end;
+    constructor function DocValue(val clob, vtype integer)   return self as result
+    is
+    begin
+        compType := vtype;
+        compVal  := AnyData.convertclob(val);
+        return;
+    end;
 
-	constructor function DocValue(cval number) return self as result
-	is
-	begin
-		compValue     := AnyData.convertvarchar2(to_char(cval));
-		compValueType := DBMS_TYPES.TYPECODE_NUMBER;
-		return;
-	end;	
-	
-	constructor function DocValue(cval date) return self as result
-	is
-	begin
-		compValue     := AnyData.convertdate(cval);
-		compValueType := DBMS_TYPES.TYPECODE_DATE;
-		return;
-	end;
-	
-	overriding member function getComponentType return integer
-	is
-	begin
-		return doc_conv_consts.comp_type_value;
-	end;
-	
-	overriding member function getValueType  return integer
-	is
-	begin
-		return compValueType;
-	end;
-	
-	overriding member function toString(fmt integer) return clob
-	is
-        result          integer;
-		return_value    clob;
-        return_value_dt date;
-	begin
-        if compValueType = DBMS_TYPES.TYPECODE_DATE then
-            result := compValue.getdate(return_value_dt);
-            return_value := to_char(return_value_dt);
+    member function getAsClob   return clob
+    is
+        cres clob;
+        dres date;
+        res  integer;
+        
+    begin
+        if compType = DBMS_TYPES.TYPECODE_DATE then
+            res := compVal.getdate(dres);
+            return to_char(dres);
         else
-            result := compValue.getvarchar2(return_value);
+            res := compVal.getclob(cres);
+            return cres;
         end if;
-		if fmt = doc_conv_consts.fmt_json 
-		and compValueType in (DBMS_TYPES.TYPECODE_VARCHAR2,
-		                      DBMS_TYPES.TYPECODE_DATE) 
-		then	
-			return_value := '"'||return_value||'"';
-		end if;
+    end;
 
-		return return_value;
-	end;
+    member function getAsNumber return number
+    is
+        cres clob;
+        res  integer;
+    begin
+        res := compVal.getclob(cres);
+        return to_number(cres);
+    end;
 
-	member function getAsVarchar2 return clob
-	is
-		result integer;
-		return_value clob;
-        return_value_dt date;
-	begin
-        if compValueType = DBMS_TYPES.TYPECODE_DATE then
-            result := compValue.getdate(return_value_dt);
-            return_value := to_char(return_value_dt);
-        else
-            result := compValue.getvarchar2(return_value);
+    member function getAsDate   return date
+    is
+        cres clob;
+        res  integer;
+    begin
+        res := compVal.getClob(cres);
+        return to_date(cres);
+    end;
+
+    overriding member function getComponentType return integer
+    is
+    begin
+        return doc_utl.comp_value;
+    end;
+
+    overriding member function toString(fmt integer, eName clob := null, aName clob := null) return clob
+    is
+        res clob;
+        i   integer;
+    begin
+        i := compVal.getClob(res);
+        if (fmt = doc_utl.fmt_json or fmt = doc_utl.fmt_json_doc)
+        and compType in (DBMS_TYPES.TYPECODE_VARCHAR2,DBMS_TYPES.TYPECODE_DATE) then
+            res := '"'||res||'"';
         end if;
-		return return_value;
-	end;
-	
-	member function getAsNumber return number
-	is
-		result integer;
-		return_value varchar2(32767);
-	begin
-		result := compValue.getvarchar2(return_value);
-		return to_number(return_value);
-	end;
-	
-	member function getAsDate return date
-	is
-		result integer;
-		return_value date;
-	begin
-		result := compValue.getdate(return_value);
-		return return_value;
-	end;
+        return res;
+    end;
+    
 end;
 /
-
