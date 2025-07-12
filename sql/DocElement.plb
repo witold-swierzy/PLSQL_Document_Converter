@@ -78,6 +78,7 @@ as
        jClob  clob;
        jObj   JSON_OBJECT_T := JSON_OBJECT_T(jDoc);
        jElem  JSON_ELEMENT_T;
+       jKeys  JSON_KEY_LIST;
     begin
        keys := KeyArray();
        vals := CompArray();

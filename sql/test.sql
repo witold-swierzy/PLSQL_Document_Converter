@@ -160,5 +160,10 @@ declare
     x1 XMLType := d1.getAsXML;
 begin
     dbms_output.put_line(x1.getclobval);
+    d1 := DocElement(x1);
+    j1 := d1.getAsJSON;
+    dbms_output.put_line(j1.to_String);
 end;
 /
+
+-- 9. attributes
