@@ -1,8 +1,8 @@
 -- 1 DocValue
 declare
-    v1 DocValue := DocValue('text',DBMS_TYPES.TYPECODE_VARCHAR2);
-    v2 DocValue := DocValue(to_char(sysdate),DBMS_TYPES.TYPECODE_DATE);
-    v3 DocValue := DocValue('100',DBMS_TYPES.TYPECODE_NUMBER);
+    v1 DocValue := DocValue('text',doc_utl.type_string);
+    v2 DocValue := DocValue(to_char(sysdate),doc_utl.type_date);
+    v3 DocValue := DocValue('100',doc_utl.type_number);
 begin
     dbms_output.put_line(v1.toString(doc_utl.fmt_json));
     dbms_output.put_line(v2.toString(doc_utl.fmt_json));
@@ -12,9 +12,9 @@ end;
 
 -- 2. DocElement
 declare
-    v1 DocValue := DocValue('text',DBMS_TYPES.TYPECODE_VARCHAR2);
-    v2 DocValue := DocValue(to_char(sysdate),DBMS_TYPES.TYPECODE_DATE);
-    v3 DocValue := DocValue('100',DBMS_TYPES.TYPECODE_NUMBER);
+    v1 DocValue := DocValue('text',doc_utl.type_string);
+    v2 DocValue := DocValue(to_char(sysdate),doc_utl_type_date);
+    v3 DocValue := DocValue('100',doc_utl.type_number);
     d1 DocElement;
     d2 DocElement;
     d3 DocElement;
@@ -35,8 +35,8 @@ end;
 
 -- 3.DocArray
 declare 
-    v1 DocValue := DocValue('text',DBMS_TYPES.TYPECODE_VARCHAR2);
-    v2 DocValue := DocValue(to_char(sysdate),DBMS_TYPES.TYPECODE_DATE);
+    v1 DocValue := DocValue('text',doc_utl.type_string);
+    v2 DocValue := DocValue(to_char(sysdate),doc_utl.type_date);
     a1 DocArray := DocArray();
     a2 DocArray := DocArray();
     d1 DocElement := DocElement();
@@ -61,8 +61,8 @@ end;
 -- 4. xml type
 declare
     d1 DocElement := DocElement();
-    v1 DocValue := DocValue('text',DBMS_TYPES.TYPECODE_VARCHAR2);
-    v2 DocValue := DocValue(to_char(sysdate),DBMS_TYPES.TYPECODE_DATE);
+    v1 DocValue := DocValue('text',doc_utl.type_string);
+    v2 DocValue := DocValue(to_char(sysdate),doc_utl.type_date);
     x1 XMLType;
     xml_type integer;
 begin
@@ -104,11 +104,11 @@ begin
 
     for i in 1..3 loop
         ti := doc_utl.scalar_type(vc(i));
-        if ti = DBMS_TYPES.TYPECODE_VARCHAR2 then
+        if ti = doc_utl.type_strin then
             dbms_output.put_line(vc(i)||' : varchar2');
-        elsif ti = DBMS_TYPES.TYPECODE_NUMBER then
+        elsif ti = doc_utl.type_number then
             dbms_output.put_line(vc(i)||' : number');
-        elsif ti = DBMS_TYPES.TYPECODE_DATE then
+        elsif ti = doc_utl.type_date then
             dbms_output.put_line(vc(i)||' : date');
         end if;
     end loop;

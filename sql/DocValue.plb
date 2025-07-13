@@ -15,7 +15,7 @@ as
         res  integer;
         
     begin
-        if compType = DBMS_TYPES.TYPECODE_DATE then
+        if compType = doc_utl.type_date then
             res := compVal.getdate(dres);
             return to_char(dres);
         else
@@ -55,7 +55,7 @@ as
     begin
         i := compVal.getClob(res);
         if (fmt = doc_utl.fmt_json or fmt = doc_utl.fmt_json_doc)
-        and compType in (DBMS_TYPES.TYPECODE_VARCHAR2,DBMS_TYPES.TYPECODE_DATE) then
+        and compType in (doc_utl.type_string,doc_utl.type_date) then
             res := '"'||res||'"';
         end if;
         return res;

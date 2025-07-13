@@ -64,7 +64,7 @@ is
             vn number(38);
         begin
             vn := to_number(val);
-            return DBMS_TYPES.TYPECODE_NUMBER;
+            return type_number;
         exception
             when others then null;
         end;
@@ -73,12 +73,17 @@ is
             vd date;
         begin
             vd := to_date(val);
-            return DBMS_TYPES.TYPECODE_DATE;
+            return type_date;
         exception
             when others then null;
         end;        
         
-        return DBMS_TYPES.TYPECODE_VARCHAR2;
+        if upper(trim(' ' from val)) = 'TRUE'
+        or upper(trim(' ' from val)) = 'FALSE' then
+            return type_bool;
+        end if;
+
+        return type_string;
         
     end;
     

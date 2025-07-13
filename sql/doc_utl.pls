@@ -1,5 +1,10 @@
 create or replace package doc_utl
 is
+    type_string constant integer := DBMS_TYPES.TYPECODE_VARCHAR2;
+    type_number constant integer := DBMS_TYPES.TYPECODE_NUMBER;
+    type_date   constant integer := DBMS_TYPES.TYPECODE_DATE;
+    type_bool   constant integer := -1;
+
     comp_component constant integer := 1;
     comp_value     constant integer := 2;
     comp_element   constant integer := 3;
