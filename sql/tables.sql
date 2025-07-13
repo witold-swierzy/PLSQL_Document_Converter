@@ -15,10 +15,7 @@ insert into doc_params values
 ( 'APPLY_DEF2JSON','N');
 
 insert into doc_params values
-( 'XML_ATTR_FORMAT','doc_conv@%element%@%attribute%');
-
-insert into doc_params values
-( 'XML_ATTR_PREFIX','xml_attribute' );
+( 'XML_ATTR_CONV_FMT','doc_conv@%element%@%attribute%');
 
 commit;
 
