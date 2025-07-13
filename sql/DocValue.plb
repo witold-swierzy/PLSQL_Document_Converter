@@ -15,13 +15,8 @@ as
         res  integer;
         
     begin
-        if compType = doc_utl.type_date then
-            res := compVal.getdate(dres);
-            return to_char(dres);
-        else
-            res := compVal.getclob(cres);
-            return cres;
-        end if;
+        res := compVal.getclob(cres);
+        return cres;
     end;
 
     member function getAsNumber return number
