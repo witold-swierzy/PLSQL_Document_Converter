@@ -125,7 +125,7 @@ as
         if rName is not null then
             res := '<'||rName||'>'||res||'</'||rName||'>';
         else
-            res := '<'||doc_utl.def_root_name||'>'||res||'</'||doc_utl.def_root_name||'>';
+            res := '<'||doc_utl.get_parameter('DEF_ROOT_NAME')||'>'||res||'</'||doc_utl.get_parameter('DEF_ROOT_NAME')||'>';
         end if;
         return XMLType(res);
     end;
@@ -136,8 +136,8 @@ as
     begin
         if rName is not null then
             res := '{"'||rName||'":'||res||'}';
-        elsif doc_utl.apply_def2json then
-            res := '{"'||doc_utl.def_root_name||'":'||res||'}';
+        elsif doc_utl.get_parameter('APPLY_DEF2JSON') = 'Y' then
+            res := '{"'||doc_utl.get_parameter('DEF_ROOT_NAME')||'":'||res||'}';
         end if;
         return JSON_ELEMENT_T.parse(res);
     end;

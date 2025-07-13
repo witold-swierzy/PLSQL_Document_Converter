@@ -167,3 +167,13 @@ end;
 /
 
 -- 9. attributes
+declare
+    t JSON_ELEMENT_T := JSON_ELEMENT_T.parse('{"doc_conv@element@abra":true}');
+    e DocElement := DocElement(t);
+begin
+    t := e.getAsJSON;
+    dbms_output.put_line(t.to_String);
+end;
+/
+
+

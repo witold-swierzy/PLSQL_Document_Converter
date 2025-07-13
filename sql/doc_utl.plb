@@ -4,20 +4,23 @@ is
     is
         v_name varchar2(200);
     begin
-        if p_param = p_def_arr_name then
-            v_name := 'def_arr_name';
-        elsif p_param = p_def_item_name then
-            v_name := 'def_item_name';
-        elsif p_param = p_def_root_name then
-            v_name := 'def_root_name';
-        elsif p_param = p_apply_def2json then
-            v_name := 'apply_def2json';
-        end if;
-        update doc_params
-        set p_value = p_val
-        where p_name = v_name;
+        v_name := upper(trim(' ' from p_param));
+        
+        if (param_table.exists(v_name)) then
+            param_table(v_name) := p_val;
+            
+            update doc_params
+            set p_value = p_val
+            where p_name = v_name;
 
-        commit;
+            commit;
+        end if;
+    end;
+
+    function  get_parameter(p_param varchar2) return varchar2
+    is
+    begin
+        return param_table(upper(trim(' ' from p_param)));
     end;
 
     function  doc_type     (doc XMLType)  return number
@@ -89,19 +92,7 @@ is
     
 begin
     for r in (select * from doc_params) loop
-        if r.p_name = 'def_arr_name' then
-            def_arr_name := r.p_value;
-        elsif r.p_name = 'def_item_name' then
-            def_item_name := r.p_value;
-        elsif r.p_name = 'def_root_name' then
-            def_root_name := r.p_value;
-        elsif r.p_name = 'apply_def2json' then
-            if r.p_value = 'N' then
-                apply_def2json := false;
-            elsif r.p_value = 'Y' then
-                apply_def2json := true;
-            end if;
-        end if;
+        param_table(r.p_name) := r.p_value;
     end loop;
 end;
 /

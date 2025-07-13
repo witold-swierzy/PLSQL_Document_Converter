@@ -77,8 +77,8 @@ as
         if fmt = doc_utl.fmt_json or fmt = doc_utl.fmt_json_doc then
             if aName is not null then
                 res := '{"'||aName||'":[';
-            elsif doc_utl.apply_def2json then
-                res := '{"'||doc_utl.def_arr_name||'":[';
+            elsif doc_utl.get_parameter('APPLY_DEF2JSON') = 'Y' then
+                res := '{"'||doc_utl.get_parameter('DEF_ARR_NAME')||'":[';
             else
                 res := '[';
             end if;
@@ -92,9 +92,9 @@ as
                               ||'":'
                               ||vals(i).toString(doc_utl.fmt_json_doc,eName,aName)
                               ||'}';
-                elsif doc_utl.apply_def2json then
+                elsif doc_utl.get_parameter('APPLY_DEF2JSON') = 'Y' then
                    res := res ||'{"'
-                              ||doc_utl.def_item_name
+                              ||doc_utl.get_parameter('DEF_ITEM_NAME')
                               ||'":'
                               ||vals(i).toString(doc_utl.fmt_json_doc,eName,aName)
                               ||'}';
@@ -102,7 +102,7 @@ as
                     res := res||vals(i).toString(doc_utl.fmt_json_doc,eName,aName);
                 end if;
             end loop;
-            if aName is not null or doc_utl.apply_def2json then
+            if aName is not null or doc_utl.get_parameter('APPLY_DEF2JSON') = 'Y' then
                 res := res || ']}';
             else
                 res := res || ']';
@@ -111,25 +111,25 @@ as
             if aName is not null then
                 res := '<'||aName||'>';
             else
-                res := '<'||doc_utl.def_arr_name||'>';
+                res := '<'||doc_utl.get_parameter('DEF_ARR_NAME')||'>';
             end if;
             for i in 1..vals.count loop
                 if eName is not null then
                     res := res || '<'||eName||'>';
                 else
-                    res := res || '<'||doc_utl.def_item_name||'>';
+                    res := res || '<'||doc_utl.get_parameter('DEF_ITEM_NAME')||'>';
                 end if;
                 res := res||vals(i).toString(fmt,eName,aName);
                 if eName is not null then
                     res := res || '</'||eName||'>';
                 else
-                    res := res || '</'||doc_utl.def_item_name||'>';
+                    res := res || '</'||doc_utl.get_parameter('DEF_ITEM_NAME')||'>';
                 end if;
             end loop;
             if aName is not null then
                 res := res || '</'||aName||'>';
             else
-                res := res || '</'||doc_utl.def_arr_name||'>';
+                res := res || '</'||doc_utl.get_parameter('DEF_ARR_NAME')||'>';
             end if;            
         end if;
         return res;

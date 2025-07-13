@@ -1,5 +1,7 @@
 create or replace package doc_utl
 is
+    type t_param_table is table of varchar2(200) index by varchar2(200);
+
     type_string constant integer := DBMS_TYPES.TYPECODE_VARCHAR2;
     type_number constant integer := DBMS_TYPES.TYPECODE_NUMBER;
     type_date   constant integer := DBMS_TYPES.TYPECODE_DATE;
@@ -15,22 +17,16 @@ is
     fmt_xml        constant integer := 3;
     fmt_xml_doc    constant integer := 4;
 
-    p_def_arr_name   constant integer := 1;
-    p_def_item_name  constant integer := 2;
-    p_def_root_name  constant integer := 3;
-    p_apply_def2json constant integer := 4;
-
     xml_value    constant integer := 1;
     xml_fragment constant integer := 2;
     xml_array    constant integer := 3;
     xml_document constant integer := 4;
-      
-    def_arr_name   varchar2(200);
-    def_item_name  varchar2(200);
-    def_root_name  varchar2(200);
-    apply_def2json boolean; 
+
+    param_table t_param_table;
 
     procedure set_parameter(p_param integer, p_val varchar2);
+    function  get_parameter(p_param varchar2) return varchar2;
+
     function  doc_type     (doc XMLType)  return number;
     function  scalar_type  (val clob) return number;
 end;
