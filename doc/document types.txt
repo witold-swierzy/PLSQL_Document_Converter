@@ -1,0 +1,23 @@
+        Types of documents:
+        	
+            doc_empty      constant integer := 0; -- val,key,lval are empty
+            doc_value      constant integer := 1; -- val is not empty; key, lval are empty
+                               example: 2, "abc"
+
+            doc_simple_el  constant integer := 2; -- val,key are not empty; lval is empty
+                                example: JSON: {"a":"abc"}
+                                         XML : <a>abc</a>
+
+            doc_complex_el constant integer := 3; -- key, lval are not empty; val is empty
+                                example: JSON: {a:{b:abc,c:def}}
+                                         XML : <a><b>abc</b><c>def</c></a>
+
+            doc_list       constant integer := 4; -- lval is not empty; val, key are empty, 
+                                example : JSON: {a:abc,b:def}
+                                          XML : <a>abc</a><b>def</b>
+
+            doc_array      constant integer := 5; -- array is not empty
+                                example : JSON : {a:[a1,a2,a3]} or [a1,a2,a3]
+                                          XML  : <a><i>a1</i><i>a2</i></a>
+            json_array.     constant integer := 6; JSON: [a,b,c]
+                                          XML - doesn't exist

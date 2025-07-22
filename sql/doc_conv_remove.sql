@@ -1,9 +1,9 @@
-drop table if exists doc_params;
-drop type if exists DocArray;
-drop type if exists DocElement;
-drop type if exists DocValue;
-drop type if exists KeyArray;
-drop type if exists CompArray;
-drop type if exists DocComponent;
+drop procedure if exists test;
 drop package if exists doc_utl;
+drop table if exists doc_params;
+drop type if exists DocElement force;
+drop type if exists AttrArray force;
+drop type if exists DocAttributei force;
+drop type if exists CompArray force;
+drop type if exists DocComponent force;
 

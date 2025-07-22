@@ -1,6 +1,7 @@
 create or replace package doc_utl
 is
     type t_param_table is table of varchar2(200) index by varchar2(200);
+    type t_vc_table is table of varchar2(200) index by binary_integer;
 
     type_string constant integer := DBMS_TYPES.TYPECODE_VARCHAR2;
     type_number constant integer := DBMS_TYPES.TYPECODE_NUMBER;
@@ -8,26 +9,29 @@ is
     type_bool   constant integer := -1;
 
     comp_component constant integer := 1;
-    comp_value     constant integer := 2;
-    comp_element   constant integer := 3;
-    comp_array     constant integer := 4;
+    comp_element   constant integer := 2;
+    comp_attribute constant integer := 3;
 
-    fmt_json       constant integer := 1;
-    fmt_json_doc   constant integer := 2;   
-    fmt_xml        constant integer := 3;
-    fmt_xml_doc    constant integer := 4;
+    doc_unknown  constant integer := -1; -- unknown format
+    doc_empty    constant integer := 0; -- val,name,lval,array are empty,
+    doc_value    constant integer := 1; -- val is not empty; name, lval, array are empty 
+    doc_simple   constant integer := 2; -- val,name are not empty; lval, array are empty
+    doc_complex  constant integer := 3; -- name, lval are not empty; val, array are empty
+    doc_list     constant integer := 4; -- lval is not empty; val, name, array are empty, 
+    doc_array    constant integer := 5; -- array is not empty, key is not empty;
+    json_array   constant integer := 6; -- array is not empty, key is empty, val is empty, elems is empty
 
-    xml_value    constant integer := 1;
-    xml_fragment constant integer := 2;
-    xml_array    constant integer := 3;
-    xml_document constant integer := 4;
+    fmt_xml        constant integer := 1;
+    fmt_json       constant integer := 2;
 
-    param_table t_param_table;
+    params    t_param_table;
+    doc_types t_vc_table;
 
-    procedure set_parameter(p_param integer, p_val varchar2);
-    function  get_parameter(p_param varchar2) return varchar2;
-
-    function  doc_type     (doc XMLType)  return number;
-    function  scalar_type  (val clob) return number;
+    function doc_type (xDoc XMLType)        return integer;
+    function doc_type (jDoc JSON_ELEMENT_T) return integer;
+    function doc_type (eDoc DocElement)     return integer;
+    function val_type (val clob)            return number;
+    function get_param(p_name varchar2)     return varchar2;
+    procedure set_param(p_n varchar2,p_val varchar2,permanent boolean := false);
 end;
 /

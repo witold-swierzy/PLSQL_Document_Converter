@@ -1,25 +1,6 @@
--- 1. creation of XML object table
-drop table if exists sample_xml_table;
-drop view if exists json_doc;
+-- requirements: EMPLOYEES_COL JSON COLLECTION must be created.
 
-create table sample_xml_table of XMLType;
-
-insert into sample_xml_table 
-values (XMLType('<abra>kadabra</abra>'));
-
-insert into sample_xml_table
-values (XMLType('<abra1><abra2>kadabra</abra2></abra1>'));
-
-insert into sample_xml_table
-values (
-'<kadabra>
-    <abra1>aaa</abra1>
-    <abra1>bbb</abra1>
-    <abra1>ccc</abra1>
-</kadabra>');
-
-commit;
-
+-- conversion function creation
 create or replace function xml2json(xDoc XMLType) return json
 is
     j JSON_ELEMENT_T := DocElement(xDoc).getAsJSON;
@@ -28,13 +9,93 @@ begin
 end;
 /
 
-select value(x) from sample_xml_table x;
-select xml2json(value(x)) from sample_xml_table x;
+create or replace function json2xml(doc JSON) return XMLType
+is
+    jc clob;
+    jd JSON_ELEMENT_T;
+    ed DocElement;
+begin
+    select json_serialize(doc)
+    into jc;
 
-select xml2json(value(t)) json_col, value(t) xml_col
-from sample_xml_table t;
+    jd := JSON_ELEMENT_T.parse(jc);
+    ed := DocElement(jd);
+
+    return ed.getAsXML;
+end;
+/
+
+-- 1. conversion from JSON to XML
+
+create table employees_xml of XMLType;
+
+insert into employees_xml
+select json2xml(c.data)
+from employees_col c;
+
+commit;
+
+-- 2. querying XML data
+select *
+form employees_xml;
+
+-- 3. conversion from XML to JSON
+select xml2json(value(e)) json_col, value(e) xml_col
+from emp_xml_view e;
+
 
 create or replace json collection view json_v
 as 
-select xml2json(value(t)) data
-from sample_xml_table t;
+select xml2json(value(e)) data
+from employees_xml e;
+
+select *
+from json_v
+
+-- mongosh
+db.json_v.find()
+
+-----
+-- requirements: HR sample schema
+CREATE OR REPLACE VIEW emp_xml_view OF XMLType
+  WITH OBJECT ID (XMLCast(XMLQuery('/Emp/employee_id'
+                                   PASSING OBJECT_VALUE RETURNING CONTENT)
+                          AS BINARY_DOUBLE)) AS
+  SELECT XMLElement("Emp",
+                    XMLForest( e.employee_id AS "employee_id",
+                    		   e.first_name AS "first_name",
+                               e.last_name AS "last_name",
+                               e.hire_date AS "hiredate"))
+  AS "result" FROM hr.employees e;
+    
+SELECT * FROM emp_xml_view;
+
+select xml2json(value(e)) json_col
+from emp_xml_view e;
+
+create or replace json collection view emp_json_view
+as
+select xml2json(value(e)) data
+from emp_xml_view e;
+
+select *
+from emp_json_view;
+
+select json2xml(c.data)
+from emp_json_view c;
+
+mongosh :
+db.emp_json_view.find()
+
+select json2xml(json(json_serialize(JSON{*})))
+      from hr.employees;
+      
+      
+      {"PHONE_NUMBER":"1.515.555.0171",
+       "JOB_ID":"AC_ACCOUNT",
+       "SALARY":8300,
+       "COMMISSION_PCT":null,
+       "FIRST_NAME":"William",
+       "EMPLOYEE_ID":206,
+       "EMAIL":"WGIETZ","LAST_NAME":"Gietz","MANAGER_ID":205,"DEPARTMENT_ID":110,"HIRE_DATE":"2012-06-07T00:00:00"}
+ 

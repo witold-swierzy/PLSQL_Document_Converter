@@ -1,5 +1,5 @@
-create type CompArray as table of DocComponent;
+create or replace type CompArray as table of DocComponent;
 /
 
-create type KeyArray as table of clob;
+create or replace type AttrArray as table of DocAttribute;
 /

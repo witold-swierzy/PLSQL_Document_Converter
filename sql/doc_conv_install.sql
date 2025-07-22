@@ -1,11 +1,9 @@
 @tables.sql
+@DocComponent.pls
+@DocAttribute.pls
+@arrays.sql
+@DocElement.pls
 @doc_utl.pls
 @doc_utl.plb
-@DocComponent.pls
-@arrays.sql
-@DocValue.pls
-@DocElement.pls
-@DocArray.pls
-@DocValue.plb
+@DocAttribute.plb
 @DocElement.plb
-@DocArray.plb
