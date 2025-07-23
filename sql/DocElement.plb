@@ -36,7 +36,7 @@ create or replace type body DocElement as
 
         key := '';
         val := '';
-        vtype := 0;
+        vtype := doc_utl.type_null;
 
         elems := CompArray();
         attrs := AttrArray();
@@ -60,8 +60,10 @@ create or replace type body DocElement as
 
             vtype := doc_utl.val_type(val);
         elsif doc_type=doc_utl.doc_complex then
+            if xDoc.getRootElement <> XML_LIST_NAME or KEEP_DOC_CONV_FMT = 'Y'  then
+                key := xDoc.getRootElement();
+            end if;
 
-            key := xDoc.getrootelement();
             for r in (select * from TABLE(XMLSEQUENCE(EXTRACT(xDoc,'/node()/*')))) loop
                 elems.extend;
                 elems(elems.count) := DocElement(r.column_value);
@@ -113,7 +115,6 @@ create or replace type body DocElement as
         njKeys   JSON_KEY_LIST;
         nElem    DocElement;
     begin
-
         XML_ARRAY_NAME    := doc_utl.get_param('XML_ARRAY_NAME');
         XML_ITEM_NAME     := doc_utl.get_param('XML_ITEM_NAME');
         XML_LIST_NAME     := doc_utl.get_param('XML_LIST_NAME');
@@ -122,7 +123,7 @@ create or replace type body DocElement as
 
         key := '';
         val := '';
-        vtype := 0;
+        vtype := doc_utl.type_null;
 
         elems := CompArray();
         attrs := AttrArray();
@@ -245,6 +246,12 @@ create or replace type body DocElement as
           and array.count > 0
         then
             return doc_utl.doc_array;
+        elsif key is not null
+          and val is null
+          and elems.count = 0
+          and array.count = 0
+        then
+            return doc_utl.doc_empty_val;
         else
             return doc_utl.doc_unknown;
         end if;
@@ -286,16 +293,22 @@ create or replace type body DocElement as
         end if;
 
         if doc_type = doc_utl.doc_empty then
-
             return null;
-
+        elsif doc_type = doc_utl.doc_empty_val then
+            res := '<'||key||attrsc||'>NULL</'||key||'>';
         elsif doc_type = doc_utl.doc_value then
-
-            res := '<'||XML_ITEM_NAME||'>'||val||'</'||XML_ITEM_NAME||'>';
+            if val is not null then
+                res := '<'||XML_ITEM_NAME||'>'||val||'</'||XML_ITEM_NAME||'>';
+            else
+                res := '<'||XML_ITEM_NAME||'>NULL</'||XML_ITEM_NAME||'>';
+            end if;
 
         elsif doc_type = doc_utl.doc_simple then
-
-            res := '<'||key||attrsc||'>'||val||'</'||key||'>';
+            if val is not null then
+                res := '<'||key||attrsc||'>'||val||'</'||key||'>';
+            else
+                res := '<'||key||attrsc||'>NULL</'||key||'>';
+            end if;
 
         elsif doc_type = doc_utl.doc_complex then
 
@@ -332,12 +345,8 @@ create or replace type body DocElement as
             end if;
 
             for i in 1..elems.count loop
-                nel := treat(elems(i) as DocElement).getAsXML;
-                if instr(nel.getclobval,XML_ITEM_NAME) <> 0 then
-                    res := res||nel.getclobval;
-                else
-                    res := res||'<'||XML_ITEM_NAME||'>'||nel.getclobval||'</'||XML_ITEM_NAME||'>';
-                end if;
+                nel := treat(elems(i) as DocElement).getAsXML;                
+                res := res||nel.getclobval;
             end loop;
 
             if add_def_tokens then

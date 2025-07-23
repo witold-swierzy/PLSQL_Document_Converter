@@ -5,19 +5,19 @@ create table doc_params
   p_value varchar2(200) );
 
 insert into doc_params values
-( 'XML_ARRAY_NAME','__doc_conv_array');
+( 'XML_ARRAY_NAME','_dc_array_');
 
 insert into doc_params values
-( 'XML_ITEM_NAME','__doc_conv_item');
+( 'XML_ITEM_NAME','_dc_item_');
 
 insert into doc_params values
-( 'XML_LIST_NAME','__doc_conv_list');
+( 'XML_LIST_NAME','_dc_object_');
 
 insert into doc_params values
-( 'JSON_ATTR_NODE','__doc_conv_attributes');
+( 'JSON_ATTR_NODE','_dc_attrs_');
 
 insert into doc_params values
-( 'JSON_NS_NODE','__doc_conv_namespaces');
+( 'JSON_NS_NODE','_dc_ns_');
 
 insert into doc_params values
 ( 'KEEP_DOC_CONV_FMT','N');

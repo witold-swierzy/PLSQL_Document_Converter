@@ -81,8 +81,9 @@ from emp_xml_view e;
 select *
 from emp_json_view;
 
-select json2xml(c.data)
-from emp_json_view c;
+select *
+from emp_json_v01;
+
 
 mongosh :
 db.emp_json_view.find()

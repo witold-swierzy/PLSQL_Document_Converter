@@ -74,6 +74,10 @@ is
     function val_type (val clob) return number
     is
     begin
+        if val is null or length(val) = 0 then
+            return type_null;
+        end if;
+        
         declare
             vn number(38);
         begin
