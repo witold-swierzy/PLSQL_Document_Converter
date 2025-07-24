@@ -34,7 +34,8 @@ begin
     dt := doc_utl.doc_type(xd);
     dtn := doc_utl.doc_types(dt);
     dbms_output.put_line('xd type : '||dtn);
-
+    dbms_output.put_line(xd.getclobval);
+    dbms_output.put_line('-----------------------');
     ed := DocElement(xd);
 
     dt := ed.getElType;
@@ -43,10 +44,10 @@ begin
     jd := ed.getAsJSON;
     dbms_output.put_line('after xml  #1 : '||xd.getclobval);
     dbms_output.put_line('after json #1 : '||jd.to_String);
-    /*ed := DocElement(xd);
+    ed := DocElement(jd);
     xd := ed.getAsXML;
     jd := ed.getAsJSON;
     dbms_output.put_line('after xml  #2 : '||xd.getclobval);
-    dbms_output.put_line('after json #2 : '||jd.to_String);*/
+    dbms_output.put_line('after json #2 : '||jd.to_String);
 
 end;

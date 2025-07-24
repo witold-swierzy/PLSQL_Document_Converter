@@ -130,6 +130,23 @@ is
         return replace(replace(xmlComments,'<!--',' '),'-->',' ');
     end;
 
+    function extractComments(jDoc in out JSON_ELEMENT_T,
+                             pCommentKey varchar2 := params('JSON_COMMENT')) return clob
+    is
+        v_comments clob := '';
+        jObj JSON_OBJECT_T;
+        jArr JSON_ARRAY_T;
+        jEl  JSON_ELEMENT_T;
+    begin
+        if jDoc.is_Object then
+            jObj := JSON_OBJECT_T(jDoc);
+            v_comments := jObj.get_Clob(pCommentKey);
+            jObj.remove(pCommentKey);
+            jDoc := JSON_ELEMENT_T.parse(jObj.to_Clob);
+        end if;
+        return v_comments;
+    end;
+
 begin
     doc_types(-1) := 'doc_unknown';
     doc_types(0)  := 'doc_empty';

@@ -119,11 +119,12 @@ create or replace type body DocElement as
     constructor function DocElement(jDoc JSON_ELEMENT_T)
     return self as result
     is
-        doc_type integer := doc_utl.doc_type(jDoc);
+        doc_type integer; 
         jObj     JSON_OBJECT_T;
         njObj    JSON_OBJECT_T;
         jArr     JSON_ARRAY_T;
         nDoc     JSON_ELEMENT_T;
+        jDoc2    JSON_ELEMENT_T;
         nVal     clob;
         jKeys    JSON_KEY_LIST;
         njKeys   JSON_KEY_LIST;
@@ -141,56 +142,45 @@ create or replace type body DocElement as
         key := '';
         val := '';
         vtype := doc_utl.type_null;
-        comments := '';
+        jDoc2 := jDoc;
+        comments := doc_utl.extractComments(jDoc2);
+        doc_type := doc_utl.doc_type(jDoc2);
 
         elems := CompArray();
         attrs := AttrArray();
         array := CompArray();
 
         if doc_type = doc_utl.doc_value then
-
-            val := jDoc.to_Clob;
+            val := jDoc2.to_Clob;
             vtype := doc_utl.val_type(val);
-
         elsif doc_type = doc_utl.doc_simple then
-            
-            jObj := JSON_OBJECT_T(jDoc);
+            jObj := JSON_OBJECT_T(jDoc2);
             jKeys := jObj.get_Keys;
             key := jKeys(1);
-            if jKeys(1) = JSON_COMMENT and KEEP_DOC_CONV_FMT = 'N' then
-                comments := jObj.get_Clob(jKeys(1));
-                doc_type := doc_utl.doc_empty;
-            else
-                val := jObj.get_Clob(jKeys(1));
-                vtype := doc_utl.val_type(val);
-            end if;
+            val := jObj.get_Clob(jKeys(1));
+            vtype := doc_utl.val_type(val);
         elsif doc_type = doc_utl.doc_complex then
-            -- comments can appear here
-            jObj := JSON_OBJECT_T(jDoc);
+            jObj := JSON_OBJECT_T(jDoc2);
             jKeys := jObj.get_Keys;
             key := jKeys(1);
             nDoc := jObj.get(key);
             jObj := JSON_OBJECT_T(nDoc);
             jKeys := jObj.get_Keys;
             for i in 1..jKeys.count loop
-                if jKeys(i) = JSON_COMMENT and KEEP_DOC_CONV_FMT = 'N' then
-                    comments := jObj.get_Clob(jKeys(i));
-                else
-                    nElem := DocElement(jObj.get(jKeys(i)));
-                    nElem.key := jKeys(i);
-                    elems.extend;
-                    elems(elems.count) := nElem;
-                end if;
+                nElem := DocElement(jObj.get(jKeys(i)));
+                nElem.key := jKeys(i);
+                elems.extend;
+                elems(elems.count) := nElem;
             end loop;
         elsif doc_type = doc_utl.json_array then
-            jArr := JSON_ARRAY_T(jDoc);
+            jArr := JSON_ARRAY_T(jDoc2);
             for i in 0..jArr.get_size-1 loop
                 array.extend;
                 array(array.count) := DocElement(jArr.get(i));
             end loop;
 
         elsif doc_type = doc_utl.doc_array then
-            jObj := JSON_OBJECT_T(jDoc);
+            jObj := JSON_OBJECT_T(jDoc2);
             jKeys := jObj.get_Keys;
             key := jKeys(1);
             nDoc := jObj.get(jKeys(1));
@@ -201,13 +191,10 @@ create or replace type body DocElement as
             end loop;        
 
         elsif doc_type = doc_utl.doc_list then
-            -- comments can appear here
-            jObj := JSON_OBJECT_T(jDoc);
+            jObj := JSON_OBJECT_T(jDoc2);
             jKeys := jObj.get_Keys;
             for i in 1..jKeys.count loop 
-                if jKeys(i) = JSON_COMMENT and KEEP_DOC_CONV_FMT = 'N' then
-                    comments := jObj.get_Clob(jKeys(i));
-                elsif jKeys(i) = JSON_ATTR_NODE and KEEP_DOC_CONV_FMT = 'N' then
+                if jKeys(i) = JSON_ATTR_NODE and KEEP_DOC_CONV_FMT = 'N' then
                    nDoc := jObj.get(jKeys(i));
                    if nDoc.is_Object then
                       njObj := JSON_OBJECT_T(nDoc);
@@ -480,6 +467,9 @@ create or replace type body DocElement as
             res := res || ']}';
         elsif doc_type = doc_utl.doc_list then
             res := '{';
+            if hasComments then
+                res := res||getComments(doc_utl.fmt_json)||',';
+            end if;
             for i in 1..elems.count loop
                 if i > 1 then
                     res := res ||',';

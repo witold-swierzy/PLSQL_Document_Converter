@@ -36,6 +36,8 @@ is
     function get_param(p_name varchar2)     return varchar2;
     procedure set_param(p_n varchar2,p_val varchar2,permanent boolean := false);
 
-    function extractComments(xmlComments clob) return clob;
+    function extractComments(xmlComments clob)    return clob;
+    function extractComments(jDoc in out JSON_ELEMENT_T,
+                             pCommentKey varchar2 := params('JSON_COMMENT')) return clob;
 end;
 /
