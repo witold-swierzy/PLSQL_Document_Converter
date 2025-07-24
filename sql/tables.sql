@@ -20,6 +20,12 @@ insert into doc_params values
 ( 'JSON_NS_NODE','_dc_ns_');
 
 insert into doc_params values
+( 'JSON_COMMENT','_dc_comment_');
+
+insert into doc_params values
+( 'IGNORE_XML_COMMENTS','N');
+
+insert into doc_params values
 ( 'KEEP_DOC_CONV_FMT','N');
 
 commit;

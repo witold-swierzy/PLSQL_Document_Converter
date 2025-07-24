@@ -77,7 +77,7 @@ is
         if val is null or length(val) = 0 then
             return type_null;
         end if;
-        
+
         declare
             vn number(38);
         begin
@@ -121,6 +121,13 @@ is
 
             commit;
         end if;
+    end;
+
+    function extractComments(xmlComments clob) return clob
+    is
+        res clob;
+    begin
+        return replace(replace(xmlComments,'<!--',' '),'-->',' ');
     end;
 
 begin

@@ -35,5 +35,7 @@ is
     function val_type (val clob)            return number;
     function get_param(p_name varchar2)     return varchar2;
     procedure set_param(p_n varchar2,p_val varchar2,permanent boolean := false);
+
+    function extractComments(xmlComments clob) return clob;
 end;
 /
