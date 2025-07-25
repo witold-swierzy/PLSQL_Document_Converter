@@ -1,3 +1,4 @@
+drop package if exists doc_conv;
 drop procedure if exists test;
 drop package if exists doc_utl;
 drop table if exists doc_params;
