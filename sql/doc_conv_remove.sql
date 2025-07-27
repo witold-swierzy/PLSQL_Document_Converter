@@ -1,3 +1,4 @@
+drop role dc_role;
 drop package if exists doc_conv;
 drop procedure if exists test;
 drop package if exists doc_utl;

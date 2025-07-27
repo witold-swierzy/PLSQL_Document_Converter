@@ -301,7 +301,6 @@ create or replace type body DocElement as
                 attrsc := attrsc||' '||attrs(i).toString(doc_utl.fmt_xml);
             end loop;
         end if;
-
         if doc_type = doc_utl.doc_empty then
             return null;
         elsif doc_type = doc_utl.doc_empty_val then
@@ -334,7 +333,7 @@ create or replace type body DocElement as
             res := res||'</'||key||'>';
         elsif doc_type = doc_utl.doc_list then
             if add_def_tokens then
-                res := '<'||XML_LIST_NAME||'>';
+                res := '<'||XML_LIST_NAME||attrsc||'>';
             else
                 res := '';
             end if;
@@ -470,6 +469,9 @@ create or replace type body DocElement as
             if hasComments then
                 res := res||getComments(doc_utl.fmt_json)||',';
             end if;
+            if hasAttrs then
+                res := res || attrsc||',';
+            end if;
             for i in 1..elems.count loop
                 if i > 1 then
                     res := res ||',';
@@ -516,6 +518,31 @@ create or replace type body DocElement as
         return false;
     end;
 
+    member function getNoOfAttrs return integer
+    is
+    begin
+        return attrs.count;
+    end;
+
+    member function getAttr(i integer) return DocAttribute
+    is
+    begin
+        return attrs(i);
+    end;
+
+    member procedure addAttr(attr DocAttribute)
+    is
+    begin
+        attrs.extend;
+        attrs(attrs.count) := attr;
+    end;
+
+    member procedure delAttrs
+    is
+    begin
+        attrs := AttrArray();
+    end;
+
     member function hasComments return boolean
     is
     begin
@@ -534,6 +561,18 @@ create or replace type body DocElement as
             return '"'||JSON_COMMENT||'":"'||comments||'"';
         end if;
         return '';
+    end;
+
+    member procedure addComment (comment clob)
+    is
+    begin
+        comments := comments||' '||comment;
+    end;
+
+    member procedure delComments
+    is
+    begin   
+        comments := '';
     end;
 end;
 /

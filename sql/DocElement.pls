@@ -31,9 +31,16 @@ create or replace type DocElement under DocComponent (
     member function getElType return integer,
     member function getAsXML  (add_def_tokens boolean := true) return XMLType,
     member function getAsJSON (add_def_tokens boolean := true) return JSON_ELEMENT_T,
-    member function hasAttrs    return boolean,
+    member function hasAttrs     return boolean,
+    member function getNoOfAttrs return integer,
+    member function getAttr(i integer) return DocAttribute,
+    member procedure addAttr(attr DocAttribute),
+    member procedure delAttrs,
+
     member function hasComments return boolean,
     member function getComments (fmt integer) return clob,
+    member procedure addComment (comment clob),
+    member procedure delComments,
 
     overriding member function getCompType return integer,
     overriding member function toString(fmt integer) return clob
