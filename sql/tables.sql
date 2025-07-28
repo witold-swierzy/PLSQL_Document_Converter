@@ -20,6 +20,9 @@ insert into doc_params values
 ( 'JSON_NS_NODE','_dc_ns_');
 
 insert into doc_params values
+( 'JSON_VAL_NAME' , '_dc_value_');
+
+insert into doc_params values
 ( 'JSON_COMMENT','_dc_comment_');
 
 insert into doc_params values

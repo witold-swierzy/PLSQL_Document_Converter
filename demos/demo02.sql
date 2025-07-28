@@ -37,7 +37,7 @@ begin
 end;
 /
 
-select *
+select department
 from dept_xml_table;
 
 create or replace json collection view dept_json_view
@@ -50,9 +50,6 @@ from dept_json_view;
 
 select doc_conv.json2xml(data)
 from dept_json_view;
-
-
-
 
 -- 2.Attributes
 declare
@@ -95,4 +92,33 @@ from dept_json_view;
 
 select doc_conv.json2xml(data)
 from dept_json_view;
+
+declare
+    xd XMLType := XMLType('<a attra="val_attr_a"><a1>val_a1</a1><a2>val_a2</a2></a>');
+    ed DocElement := DocElement(xd);
+    jd JSON_ELEMENT_T := ed.getAsJSON;
+begin
+    dbms_output.put_line('before attribute to element transformation : ');
+    dbms_output.put_line(xd.getclobval);
+    dbms_output.put_line(jd.to_String);
+    
+    ed.attr2element('attra');
+    
+    xd := ed.getAsXML;
+    jd := ed.getAsJSON;
+    
+    dbms_output.put_line('after attribute to element transformation : ');
+    dbms_output.put_line(xd.getclobval);
+    dbms_output.put_line(jd.to_String);
+
+    ed.element2attr('attra');
+    xd := ed.getAsXML;
+    jd := ed.getAsJSON;
+    dbms_output.put_line('after element to attribute transformation : ');
+    dbms_output.put_line(xd.getclobval);
+    dbms_output.put_line(jd.to_String);
+end loop;
+/
+    
+
 

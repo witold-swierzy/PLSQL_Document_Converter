@@ -30,4 +30,17 @@ is
 
         return json_element_t2xml(jd);
     end;
+
+    function get_param(p_name varchar2) return varchar2
+    is
+    begin
+        return doc_utl.get_param(p_name);
+    end;
+
+    procedure set_param(p_n varchar2,p_val varchar2,permanent boolean := false)
+    is
+    begin
+        doc_utl.set_param(p_n,p_val,permanent);
+    end;
 end;
+/

@@ -10,6 +10,7 @@ create or replace type body DocElement as
         JSON_ATTR_NODE      := doc_utl.get_param('JSON_ATTR_NODE');
         JSON_COMMENT        := doc_utl.get_param('JSON_COMMENT');
         JSON_NS_NODE        := doc_utl.get_param('JSON_NS_NODE');
+        JSON_VAL_NAME       := doc_utl.get_param('JSON_VAL_NAME');
         IGNORE_XML_COMMENTS := doc_utl.get_param('IGNORE_XML_COMMENTS');
         KEEP_DOC_CONV_FMT   := doc_utl.get_param('KEEP_DOC_CONV_FMT');
 
@@ -23,6 +24,57 @@ create or replace type body DocElement as
         array := CompArray();
         return;
     end;
+
+    constructor function DocElement(eVal clob)
+    return self as result
+    is
+    begin
+        XML_ARRAY_NAME      := doc_utl.get_param('XML_ARRAY_NAME');
+        XML_ITEM_NAME       := doc_utl.get_param('XML_ITEM_NAME');
+        XML_LIST_NAME       := doc_utl.get_param('XML_LIST_NAME');
+        JSON_ATTR_NODE      := doc_utl.get_param('JSON_ATTR_NODE');
+        JSON_COMMENT        := doc_utl.get_param('JSON_COMMENT');
+        JSON_NS_NODE        := doc_utl.get_param('JSON_NS_NODE');
+        JSON_VAL_NAME       := doc_utl.get_param('JSON_VAL_NAME');
+        IGNORE_XML_COMMENTS := doc_utl.get_param('IGNORE_XML_COMMENTS');
+        KEEP_DOC_CONV_FMT   := doc_utl.get_param('KEEP_DOC_CONV_FMT');
+
+        key := '';
+        val := eVal;
+        vtype := doc_utl.val_type(val);
+        comments := '';
+
+        elems := CompArray();
+        attrs := AttrArray();
+        array := CompArray();
+        return;        
+    end;
+
+    constructor function DocElement(eKey clob, eVal clob)
+    return self as result
+    is
+    begin
+        XML_ARRAY_NAME      := doc_utl.get_param('XML_ARRAY_NAME');
+        XML_ITEM_NAME       := doc_utl.get_param('XML_ITEM_NAME');
+        XML_LIST_NAME       := doc_utl.get_param('XML_LIST_NAME');
+        JSON_ATTR_NODE      := doc_utl.get_param('JSON_ATTR_NODE');
+        JSON_COMMENT        := doc_utl.get_param('JSON_COMMENT');
+        JSON_NS_NODE        := doc_utl.get_param('JSON_NS_NODE');
+        JSON_VAL_NAME       := doc_utl.get_param('JSON_VAL_NAME');
+        IGNORE_XML_COMMENTS := doc_utl.get_param('IGNORE_XML_COMMENTS');
+        KEEP_DOC_CONV_FMT   := doc_utl.get_param('KEEP_DOC_CONV_FMT');
+
+        key := eKey;
+        val := eVal;
+        vtype := doc_utl.val_type(val);
+        comments := '';
+
+        elems := CompArray();
+        attrs := AttrArray();
+        array := CompArray();
+        return;    
+    end;
+
 
     constructor function DocElement(xDoc XMLType) 
     return self as result
@@ -38,6 +90,7 @@ create or replace type body DocElement as
         JSON_ATTR_NODE      := doc_utl.get_param('JSON_ATTR_NODE');
         JSON_COMMENT        := doc_utl.get_param('JSON_COMMENT');
         JSON_NS_NODE        := doc_utl.get_param('JSON_NS_NODE');
+        JSON_VAL_NAME       := doc_utl.get_param('JSON_VAL_NAME');
         IGNORE_XML_COMMENTS := doc_utl.get_param('IGNORE_XML_COMMENTS');
         KEEP_DOC_CONV_FMT   := doc_utl.get_param('KEEP_DOC_CONV_FMT');
 
@@ -71,11 +124,22 @@ create or replace type body DocElement as
             key := xDoc.getrootelement();
             select extractvalue(xDoc,'/node()')
             into val;
-
+            val := regexp_replace(val,'[[:space:]]');
             vtype := doc_utl.val_type(val);
         elsif doc_type=doc_utl.doc_complex then
+            
             if xDoc.getRootElement <> XML_LIST_NAME or KEEP_DOC_CONV_FMT = 'Y'  then
                 key := xDoc.getRootElement();
+            end if;
+
+            -- text element --
+            select extractvalue(xDoc,'/node()/text()')
+            into tval;
+            tval := regexp_replace(tval,'[[:space:]]');
+            
+            if tval is not null then
+               elems.extend;
+               elems(elems.count) := DocElement(replace(tval,' ','')); 
             end if;
 
             for r in (select * from TABLE(XMLSEQUENCE(EXTRACT(xDoc,'/node()/*')))) loop
@@ -136,6 +200,7 @@ create or replace type body DocElement as
         JSON_ATTR_NODE      := doc_utl.get_param('JSON_ATTR_NODE');
         JSON_COMMENT        := doc_utl.get_param('JSON_COMMENT');
         JSON_NS_NODE        := doc_utl.get_param('JSON_NS_NODE');
+        JSON_VAL_NAME       := doc_utl.get_param('JSON_VAL_NAME');
         IGNORE_XML_COMMENTS := doc_utl.get_param('IGNORE_XML_COMMENTS');
         KEEP_DOC_CONV_FMT   := doc_utl.get_param('KEEP_DOC_CONV_FMT');
 
@@ -168,7 +233,9 @@ create or replace type body DocElement as
             jKeys := jObj.get_Keys;
             for i in 1..jKeys.count loop
                 nElem := DocElement(jObj.get(jKeys(i)));
-                nElem.key := jKeys(i);
+                if jKeys(i) <> JSON_VAL_NAME or KEEP_DOC_CONV_FMT = 'Y' then
+                    nElem.key := jKeys(i);
+                end if;
                 elems.extend;
                 elems(elems.count) := nElem;
             end loop;
@@ -295,6 +362,7 @@ create or replace type body DocElement as
         res      clob := '';
         attrsc   clob := '';
         nel      XMLType;
+        ned      DocElement;
     begin
         if hasAttrs then
             for i in 1..attrs.count loop
@@ -313,8 +381,13 @@ create or replace type body DocElement as
             res := '<'||key||attrsc||'>'||getComments(doc_utl.fmt_xml);
 
             for i in 1..elems.count loop
-                nel := treat(elems(i) as DocElement).getAsXML(false);
-                res := res||nel.getclobval;
+                ned := treat(elems(i) as DocElement);
+                if ned.getElType = doc_utl.doc_value then
+                    res := res||ned.val;
+                else
+                    nel := ned.getAsXML(false);
+                    res := res||nel.getclobval;
+                end if;
             end loop;
 
             res := res||'</'||key||'>';
@@ -405,33 +478,49 @@ create or replace type body DocElement as
             if hasComments then
                 res := res||getComments(doc_utl.fmt_json)||',';
             end if;
-            if hasAttrs then
-                res := res || attrsc||',';
-            end if;
             res := res||'"'||key||'":';
+            if hasAttrs then
+                res := res || '{'||attrsc||',';
+            end if;
             if doc_utl.val_type(val) <> doc_utl.type_number then
                 tval := '"'||val||'"';
             else
                 tval := val;
             end if;
+            if hasAttrs then
+                tval := '"'||JSON_VAL_NAME||'":'||tval;
+            end if;
             res := res || tval ||'}';
+            if hasAttrs then
+                res := res||'}';
+            end if;
         elsif doc_type = doc_utl.doc_complex then
             res := '{';
             if hasComments then
                 res := res||getComments(doc_utl.fmt_json)||',';
             end if;
+            res := res||'"'||key||'":{';
             if hasAttrs then
                 res := res || attrsc||',';
             end if;
-            res := res||'"'||key||'":{';
             for i in 1..elems.count loop
                 if i > 1 then
                     res := res ||',';
                 end if;
-                nJson := treat(elems(i) as DocElement).getAsJSON;
-                tval := nJson.to_String;
-                tval := substr(tval,2);
-                tval := substr(tval,1,length(tval)-1);
+                nDoc := treat(elems(i) as DocElement);
+                if nDoc.getElType = doc_utl.doc_value then
+                    tval := '"'||JSON_VAL_NAME||'":';
+                    if doc_utl.val_type(nDoc.val) = doc_utl.type_number then
+                        tval := tval || nDoc.val;
+                    else
+                        tval := tval || '"' || nDoc.val || '"';
+                    end if;
+                else
+                    nJson := nDoc.getAsJSON;
+                    tval := nJson.to_String;
+                    tval := substr(tval,2);
+                    tval := substr(tval,1,length(tval)-1);
+                end if;
                 res := res||tval;
             end loop;
             res := res || '}}';
@@ -509,6 +598,90 @@ create or replace type body DocElement as
         return JSON_ELEMENT_T.parse(res);
     end;
 
+    member function getNoOfElements return integer
+    is
+    begin
+        if val is not null then
+            return 1;
+        end if;
+        return elems.count;
+    end;
+
+    member function getElement(eKey clob) return DocElement
+    is
+    begin
+        if key = eKey then
+            return self;
+        end if;
+        for i in 1..elems.count loop
+            if treat(elems(i) as DocElement).key = eKey then
+                return treat(elems(i) as DocElement);
+            end if;
+        end loop;
+        return null;
+    end;
+
+    member procedure addElement(eKey clob, eVal clob, nest boolean := false)
+    is
+    begin
+        addElement(DocElement(eKey,eVal),nest);
+    end;
+
+    member procedure addElement(elem DocElement, nest boolean := false)
+    is
+        dType integer := getElType;
+    begin
+        if dType = doc_utl.doc_simple then
+            elems.extend;
+            if nest then
+                elems(elems.count) := DocElement(key,val);
+                key := '';
+                val := '';
+            else
+                elems(elems.count) := DocElement(val);
+                val := '';
+            end if;    
+            elems.extend;
+            elems(elems.count) := elem;
+        elsif dType = doc_utl.doc_complex or dType = doc_utl.doc_list then
+            elems.extend;
+            elems(elems.count) := elem;
+        elsif dType = doc_utl.doc_array or dType = doc_utl.json_array then
+            array.extend;
+            array(array.count) := elem;
+        end if;
+    end;
+
+    member procedure delElement(eKey clob)
+    is
+        dType integer := getElType;        
+        de DocElement;
+    begin
+        if dType = doc_utl.doc_list or dType = doc_utl.doc_complex then
+            for i in 1..elems.count loop
+                de := treat(elems(i) as DocElement);
+                if de.key = eKey then
+                    for j in i..elems.count-1 loop
+                        elems(j) := elems(j+1);
+                    end loop;
+                    elems.trim;
+                    return;
+                end if;
+            end loop;
+        elsif dType = doc_utl.doc_simple and key = eKey then
+            key := '';
+            val := '';
+        end if;
+    end;
+
+    member procedure addRootKey(eKey clob)
+    is
+    begin
+        if getElType = doc_utl.doc_list then
+            key := eKey;
+        end if;
+    end;
+
     member function hasAttrs return boolean
     is
     begin
@@ -530,6 +703,13 @@ create or replace type body DocElement as
         return attrs(i);
     end;
 
+    member procedure addAttr(aName clob, aVal clob)
+    is
+    begin
+        attrs.extend;
+        attrs(attrs.count) := DocAttribute(aName,aVal);
+    end;
+
     member procedure addAttr(attr DocAttribute)
     is
     begin
@@ -537,10 +717,66 @@ create or replace type body DocElement as
         attrs(attrs.count) := attr;
     end;
 
+    member procedure delAttr(aName clob)
+    is
+    begin
+        for i in 1..attrs.count loop
+            if attrs(i).key = aName then
+                for j in i..attrs.count - 1 loop
+                    attrs(j) := attrs(j+1);
+                end loop;
+                attrs.trim;
+                return;
+            end if;
+        end loop;
+    end;
+
     member procedure delAttrs
     is
     begin
         attrs := AttrArray();
+    end;
+
+    member procedure attr2element(eKey clob)
+    is
+        dType integer := getElType; 
+    begin
+        for i in 1..attrs.count loop
+            if attrs(i).key = eKey then
+                addElement(attrs(i).key, attrs(i).val);
+                for j in i..attrs.count-1 loop
+                    attrs(j) := attrs(j+1);
+                end loop;
+                attrs.trim;
+                return;
+            end if;
+        end loop;
+    end;
+
+    member procedure element2attr(eKey clob)
+    is
+        dType integer := getElType; 
+        ed DocElement;
+    begin
+        for i in 1..elems.count loop
+            ed := treat(elems(i) as DocElement);
+            if ed.key = eKey and ed.getElType = doc_utl.doc_simple then
+                attrs.extend;
+                attrs(attrs.count) := DocAttribute(ed.key,ed.val);
+                for j in i..elems.count-1 loop
+                    elems(j) := elems(j+1);
+                end loop;
+                elems.trim;
+                if elems.count = 1 then
+                    ed := treat(elems(elems.count) as DocElement);
+                    if ed.getElType = doc_utl.doc_value then
+                        val := ed.val;
+                        elems.trim;
+                    end if;
+                end if;
+                return;
+            end if;
+        end loop;
     end;
 
     member function hasComments return boolean
