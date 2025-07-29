@@ -1,93 +1,41 @@
--- basic document manipulation
-drop table if exists dept_xml_table;
+-- this demo demonstrates basic functionality of Document Conversion API
+-- requirements: HR sample schema
+drop table if exists emp_xml_table;
 
-create table dept_xml_table
+create table emp_xml_table OF XMLType
 as
-select department_id, doc_conv.json2xml(JSON{*}) department
-from hr.departments;
+select XMLElement("Emp",
+                    XMLForest( e.employee_id AS "employee_id",
+                    		   e.first_name AS "first_name",
+                               e.last_name AS "last_name",
+                               e.hire_date AS "hiredate"))
+"result" FROM hr.employees e;
 
-select *
-from dept_xml_table;
+-- alternative
+drop table if exists emp_xml_table;
 
-create or replace json collection view dept_json_view
+create table emp_xml_table of XMLType
 as
-select doc_conv.xml2json(department)
-from dept_xml_table;
+select doc_conv.json2xml(JSON{*}) employee
+from hr.employees;
+--
+select * from emp_xml_table;    
+
+select doc_conv.xml2json(value(e)) json_col
+from emp_xml_table e;
+
+create or replace json collection view emp_json_view
+as
+select doc_conv.xml2json(value(e)) data
+from emp_xml_table e;
 
 select *
-from dept_json_view;
+from emp_json_view;
 
-declare
-	cursor c_dept is select * from dept_xml_table for update;
-	de DocElement;
-begin
-	for r_dept in c_dept loop
-		de := DocElement(r_dept.department);
-		de.addRootKey('DEPARTMENT');
-		
-		update dept_xml_table
-		set department = de.getAsXML
-		where current of c_dept;
-	end loop;
-	commit;
-end;
-/
+mongosh :
+db.emp_json_view.find()
+db.emp_json_view.find({"employee.salary":2500})
+db.emp_json_view.find({"employee.salary":2500}).explain()
 
-select *
-from dept_xml_table;
 
-select *
-from dept_json_view;
-
-declare
-	cursor c_dept is select * from dept_xml_table for update;
-	de DocElement;
-begin
-	for r_dept in c_dept loop
-		de := DocElement(r_dept.department);
-		de.delElement('MANAGER_ID');
-		
-		update dept_xml_table
-		set department = de.getAsXML
-		where current of c_dept;
-	end loop;
-	commit;
-end;
-/
-
-select *
-from dept_xml_table;
-
-select *
-from dept_json_view;
-
-declare
-	cursor c_dept is select * from dept_xml_table for update;
-	de DocElement;
-	nde DocElement;
-	NofEMPS integer;
-begin
-	for r_dept in c_dept loop
-		de := DocElement(r_dept.department);
-		nde := de.getElement('DEPARTMENT_ID');
-				
-		select count(*)
-		into NofEMPS
-		from hr.employees
-		where department_id = to_char(nde.val);
-		
-		de.addElement('NO_OF_EMPS',to_clob(NofEMPS));
-		
-		update dept_xml_table
-		set department = de.getAsXML
-		where current of c_dept;
-	end loop;
-	commit;
-end;
-/
-
-select *
-from dept_xml_table;
-
-select *
-from dept_json_view;
+ 
