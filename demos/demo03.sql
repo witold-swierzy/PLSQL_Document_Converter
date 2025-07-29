@@ -64,4 +64,22 @@ from dept_emp_json_table;
 
 select *
 from dept_emp_xml_table;
-	
+
+-- or
+
+declare
+	dept_de DocElement;
+	jd JSON_ELEMENT_T;
+	xd XMLType;
+begin
+	for rd in (select JSON{*} dept from hr.departments) loop
+		dept_de := DocElement(JSON_ELEMENT_T.parse(JSON_SERIALIZE(rd.dept)));
+		dept_de.setRootKey('DEPARTMENT');
+		dept_de.aggregate('HR.EMPLOYEES','DEPARTMENT_ID');
+		jd := dept_de.getAsJSON;
+		xd := dept_de.getAsXML;
+		dbms_output.put_line(jd.to_String);
+		dbms_output.put_line(xd.getClobVal);
+	end loop;	
+end;
+/

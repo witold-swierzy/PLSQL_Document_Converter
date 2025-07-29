@@ -720,6 +720,21 @@ create or replace type body DocElement as
         end if;
     end;
 
+    member procedure aggregate(tName varchar2, tKey clob)
+    is
+        v_query clob := 'select * from '||tNAME||' where '||tKey||' = ';
+        deKey DocElement := treat(getElement(tKey) as DocElement);
+    begin
+        if deKey.getElType = doc_utl.doc_simple then
+            v_query := v_query||deKey.val;
+        
+            deKey := DocElement.getArray(v_query,tName,tKey);
+            if deKey is not null then
+                addElement(deKey);
+            end if;
+        end if;
+    end;
+
     member function hasAttrs return boolean
     is
     begin

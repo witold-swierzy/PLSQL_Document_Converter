@@ -49,6 +49,7 @@ create or replace type DocElement under DocComponent (
     member procedure addElement(elem DocElement, nest boolean := false),
     member procedure delElement(eKey clob),
     member procedure setRootKey(eKey clob),
+    member procedure aggregate(tName varchar2, tKey clob),
 
     member function hasAttrs     return boolean,
     member function getNoOfAttrs return integer,
