@@ -286,6 +286,35 @@ create or replace type body DocElement as
         return;
     end;
 
+    static function getArray(p_query clob, 
+                             arrayName clob := null, 
+                             rowName clob := null) return DocElement
+    is
+        type json_array_t is table of json;
+        json_array json_array_t;
+        v_query clob := 'select JSON{*} from ('||p_query||')';
+        de DocElement := DocElement();
+        di DocElement;
+    begin
+        execute immediate v_query bulk collect into json_array;
+        if json_array.count <> 0 then
+            for i in json_array.first..json_array.last loop
+                de.array.extend;
+                di := DocElement(JSON_ELEMENT_T.parse(JSON_SERIALIZE(json_array(i))));
+                de.array(de.array.count) := di;
+            end loop;
+
+            if arrayName is not null then
+                de.setRootKey(arrayName);
+            end if; 
+            if rowName is not null then
+                de.setParameter('XML_ITEM_NAME',rowName);
+            end if;       
+            return de;
+        end if;
+        return null;
+    end;
+
     member function getElType return integer
     is
     begin
@@ -363,6 +392,7 @@ create or replace type body DocElement as
         attrsc   clob := '';
         nel      XMLType;
         ned      DocElement;
+        nelc     clob;
     begin
         if hasAttrs then
             for i in 1..attrs.count loop
@@ -393,14 +423,17 @@ create or replace type body DocElement as
             res := res||'</'||key||'>';
         elsif doc_type = doc_utl.doc_array then
             res := '<'||key||attrsc||'>'||getComments(doc_utl.fmt_xml);
-
-            for i in 1..array.count loop
-                nel := treat(array(i) as DocElement).getAsXML(false);
-                if instr(nel.getclobval,XML_ITEM_NAME) <> 0 then
-                    res := res||nel.getclobval;
+            for i in 1..array.count loop  
+                ned := treat(array(i) as DocElement);
+                if ned.getElType = doc_utl.doc_list then
+                    ned.XML_LIST_NAME := XML_ITEM_NAME;
+                    nel := ned.getAsXML;
+                    nelc := nel.getClobVal;
                 else
-                    res := res||'<'||XML_ITEM_NAME||'>'||nel.getclobval||'</'||XML_ITEM_NAME||'>';
-                end if;
+                    nel := ned.getAsXML;
+                    nelc := '<'||XML_ITEM_NAME||'>'||nel.getClobVal||'</'||XML_ITEM_NAME||'>';
+                end if;        
+                res := res||nelc;
             end loop;
 
             res := res||'</'||key||'>';
@@ -424,12 +457,16 @@ create or replace type body DocElement as
             res := '<'||XML_ARRAY_NAME||'>'||getComments(doc_utl.fmt_xml);
 
             for i in 1..array.count loop
-                nel := treat(array(i) as DocElement).getAsXML;
-                if instr(nel.getclobval,XML_ITEM_NAME) <> 0 then
-                    res := res||nel.getclobval;
+                ned := treat(array(i) as DocElement);
+                if ned.getElType = doc_utl.doc_list then
+                    ned.XML_LIST_NAME := XML_ITEM_NAME;
+                    nel := ned.getAsXML;
+                    nelc := nel.getClobVal;
                 else
-                    res := res||'<'||XML_ITEM_NAME||'>'||nel.getclobval||'</'||XML_ITEM_NAME||'>';
-                end if;
+                    nel := ned.getAsXML;
+                    nelc := '<'||XML_ITEM_NAME||'>'||nel.getClobVal||'</'||XML_ITEM_NAME||'>';
+                end if;        
+                res := res||nelc;
             end loop;
 
             res := res||'</'||XML_ARRAY_NAME||'>'; -- parameters needed (def list name, item name)
@@ -546,7 +583,7 @@ create or replace type body DocElement as
                     if nDoc.vtype <> doc_utl.type_number then
                         tval := '"'||nDoc.val||'"';
                     else
-                        tval := '"'||nDoc.val||'"';
+                        tval := nDoc.val; -- was ""
                     end if;
                 end if;
                 res := res||tval;
@@ -674,10 +711,11 @@ create or replace type body DocElement as
         end if;
     end;
 
-    member procedure addRootKey(eKey clob)
+    member procedure setRootKey(eKey clob)
     is
+        dType integer := getElType;
     begin
-        if getElType = doc_utl.doc_list then
+        if dType in (doc_utl.doc_list,doc_utl.doc_array,doc_utl.json_array) then
             key := eKey;
         end if;
     end;
@@ -809,6 +847,28 @@ create or replace type body DocElement as
     is
     begin   
         comments := '';
+    end;
+
+    member procedure setParameter(pName varchar2, pValue varchar2)
+    is
+    begin
+        if upper(pName) = 'XML_ITEM_NAME' then
+            XML_ITEM_NAME := pValue;
+        elsif upper(pName) = 'XML_LIST_NAME' then
+            XML_LIST_NAME := pValue;
+        elsif upper(pName) = 'JSON_ATTR_NODE' then
+            JSON_ATTR_NODE := pValue;
+        elsif upper(pName) = 'JSON_NS_NODE' then
+            JSON_NS_NODE := pValue;
+        elsif upper(pName) = 'JSON_VAL_NAME' then
+            JSON_VAL_NAME := pValue;
+        elsif upper(pName) = 'JSON_COMMENT' then
+            JSON_COMMENT := pValue;
+        elsif upper(pName) = 'IGNORE_XML_COMMENTS' then
+            IGNORE_XML_COMMENTS := pValue;
+        elsif upper(pName) = 'KEEP_DOC_CONV_FMT' then
+            KEEP_DOC_CONV_FMT := pValue;
+        end if;
     end;
 end;
 /

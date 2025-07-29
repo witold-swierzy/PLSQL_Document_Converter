@@ -1,124 +1,67 @@
--- this demo demonstrates comments and attributes support 
--- requirements: HR sample schema
-
--- 1. Comments
-drop table if exists dept_xml_table;
-
-create table dept_xml_table
-as
-select department_id, doc_conv.json2xml(JSON{*}) department
-from hr.departments;
-
-select *
-from dept_xml_table;
+-- arrays
+-- requires HR sample schema
+set serveroutput on
 
 declare
-    cursor c_dept is select * from dept_xml_table for update;
-    de DocElement;
-    dj JSON_ELEMENT_T;
-    dx XMLType;
-    i integer := 0;
+	de DocElement := DocElement.getArray('select * from hr.employees '||
+                                             'where department_id = 90','EMP_90','EMPLOYEE');
+	dx XMLType;
+	dj JSON_ELEMENT_T;
 begin
-    for r in c_dept loop
-    
-        i := i+1;
-        
-        de := DocElement(r.department);
-        de.addComment('Comment for department : '||r.department_id);
-        
-        dx := de.getAsXML;
-        
-        update dept_xml_table
-        set department = dx
-        where current of c_dept;
-    
-    end loop;
-    commit;
+	dbms_output.put_line('type : '||de.getElType);
+	dj := de.getAsJSON;
+	dx := de.getAsXML;
+	dbms_output.put_line('------- JSON DATA -------');
+	dbms_output.put_line(dj.to_String);
+	dbms_output.put_line('---- END OF JSON DATA ---');
+	dbms_output.put_line('------- XML DATA --------');
+	dbms_output.put_line(dx.getClobVal);
+	dbms_output.put_line('---- END OF XML DATA ----'); 
 end;
 /
 
-select department
-from dept_xml_table;
+drop table if exists dept_emp_json_table;
+create json collection table dept_emp_json_table;
 
-create or replace json collection view dept_json_view
-as
-select doc_conv.xml2json(department)
-from dept_xml_table;
+drop table if exists dept_emp_xml_table;
+create table dept_emp_xml_table of XMLType;
 
-select *
-from dept_json_view;
-
-select doc_conv.json2xml(data)
-from dept_json_view;
-
--- 2.Attributes
 declare
-    cursor c_dept is select * from dept_xml_table for update;
-    de DocElement;
-    dj JSON_ELEMENT_T;
-    dx XMLType;
-    da DocAttribute;
-    i integer := 0;
+	dept_emp_de DocElement := DocElement();
+	dept_de DocElement := DocElement();
+	emp_de  DocElement := DocElement();
+	dept_id DocElement;
+	jd JSON_ELEMENT_T;
+	xd XMLType;
+	jc clob;
 begin
-    for r in c_dept loop
-        de := DocElement(r.department);
-        
-        select count(*)
-        into i
-        from hr.employees
-        where department_id = r.department_id;
-        
-        da := DocAttribute('no_of_emps',to_clob(i));
-        dbms_output.put_line('i = '||i);
-        dbms_output.put_line('key = '||da.key||' val = '||da.val);
-        
-        de.addAttr(da);
-        dx := de.getAsXML;        
-        
-        update dept_xml_table
-        set department = dx
-        where current of c_dept;
-    
-    end loop;
-    commit;
+	dept_emp_de.setRootKey('DEPARTMENTS');
+
+	for rd in (select JSON{*} dept from hr.departments) loop
+		dept_de := DocElement(JSON_ELEMENT_T.parse(JSON_SERIALIZE(rd.dept)));
+		dept_de.setRootKey('DEPARTMENT');
+		dept_id := dept_de.getElement('DEPARTMENT_ID');
+		emp_de := DocElement.getArray('select * from hr.employees where department_id = '||dept_id.val,'EMPLOYEES','EMP');
+
+		if emp_de is not null then
+			dept_de.addElement(emp_de);			
+		end if;
+		
+		jd := dept_de.getAsJSON;
+		xd := dept_de.getAsXML;
+		jc := jd.to_Clob;
+		
+		insert into dept_emp_json_table values (jc);
+		insert into dept_emp_xml_table values (xd);
+	end loop;
+	commit;
+	
 end;
 /
 
 select *
-from dept_xml_table;
+from dept_emp_json_table;
 
 select *
-from dept_json_view;
-
-select doc_conv.json2xml(data)
-from dept_json_view;
-
-declare
-    xd XMLType := XMLType('<a attra="val_attr_a"><a1>val_a1</a1><a2>val_a2</a2></a>');
-    ed DocElement := DocElement(xd);
-    jd JSON_ELEMENT_T := ed.getAsJSON;
-begin
-    dbms_output.put_line('before attribute to element transformation : ');
-    dbms_output.put_line(xd.getclobval);
-    dbms_output.put_line(jd.to_String);
-    
-    ed.attr2element('attra');
-    
-    xd := ed.getAsXML;
-    jd := ed.getAsJSON;
-    
-    dbms_output.put_line('after attribute to element transformation : ');
-    dbms_output.put_line(xd.getclobval);
-    dbms_output.put_line(jd.to_String);
-
-    ed.element2attr('a1');
-    xd := ed.getAsXML;
-    jd := ed.getAsJSON;
-    dbms_output.put_line('after element to attribute transformation : ');
-    dbms_output.put_line(xd.getclobval);
-    dbms_output.put_line(jd.to_String);
-end loop;
-/
-    
-
-
+from dept_emp_xml_table;
+	

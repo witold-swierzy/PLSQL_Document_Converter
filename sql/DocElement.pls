@@ -35,6 +35,10 @@ create or replace type DocElement under DocComponent (
     constructor function DocElement(jDoc JSON_ELEMENT_T)
     return self as result,
 
+    static function getArray(p_query clob, 
+                             arrayName clob := null, 
+                             rowName clob := null) return DocElement,
+
     member function getElType return integer,
     member function getAsXML  (add_def_tokens boolean := true) return XMLType,
     member function getAsJSON (add_def_tokens boolean := true) return JSON_ELEMENT_T,
@@ -44,7 +48,7 @@ create or replace type DocElement under DocComponent (
     member procedure addElement(eKey clob, eVal clob, nest boolean := false),
     member procedure addElement(elem DocElement, nest boolean := false),
     member procedure delElement(eKey clob),
-    member procedure addRootKey(eKey clob),
+    member procedure setRootKey(eKey clob),
 
     member function hasAttrs     return boolean,
     member function getNoOfAttrs return integer,
@@ -61,6 +65,8 @@ create or replace type DocElement under DocComponent (
     member function getComments (fmt integer) return clob,
     member procedure addComment (comment clob),
     member procedure delComments,
+
+    member procedure setParameter(pName varchar2, pValue varchar2),
 
     overriding member function getCompType return integer,
     overriding member function toString(fmt integer) return clob

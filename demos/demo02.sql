@@ -23,7 +23,7 @@ declare
 begin
 	for r_dept in c_dept loop
 		de := DocElement(r_dept.department);
-		de.addRootKey('DEPARTMENT');
+		de.setRootKey('DEPARTMENT');
 		
 		update dept_xml_table
 		set department = de.getAsXML
