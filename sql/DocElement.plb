@@ -9,6 +9,7 @@ create or replace type body DocElement as
         XML_LIST_NAME       := doc_utl.get_param('XML_LIST_NAME');
         JSON_ATTR_NODE      := doc_utl.get_param('JSON_ATTR_NODE');
         JSON_COMMENT        := doc_utl.get_param('JSON_COMMENT');
+        JSON_CDATA          := doc_utl.get_param('JSON_CDATA');
         JSON_NS_NODE        := doc_utl.get_param('JSON_NS_NODE');
         JSON_VAL_NAME       := doc_utl.get_param('JSON_VAL_NAME');
         IGNORE_XML_COMMENTS := doc_utl.get_param('IGNORE_XML_COMMENTS');
@@ -18,6 +19,7 @@ create or replace type body DocElement as
         val := '';
         vtype := doc_utl.type_null;
         comments := '';
+        cdata := '';
 
         elems := CompArray();
         attrs := AttrArray();
@@ -34,6 +36,7 @@ create or replace type body DocElement as
         XML_LIST_NAME       := doc_utl.get_param('XML_LIST_NAME');
         JSON_ATTR_NODE      := doc_utl.get_param('JSON_ATTR_NODE');
         JSON_COMMENT        := doc_utl.get_param('JSON_COMMENT');
+        JSON_CDATA          := doc_utl.get_param('JSON_CDATA');
         JSON_NS_NODE        := doc_utl.get_param('JSON_NS_NODE');
         JSON_VAL_NAME       := doc_utl.get_param('JSON_VAL_NAME');
         IGNORE_XML_COMMENTS := doc_utl.get_param('IGNORE_XML_COMMENTS');
@@ -43,6 +46,7 @@ create or replace type body DocElement as
         val := eVal;
         vtype := doc_utl.val_type(val);
         comments := '';
+        cdata := '';
 
         elems := CompArray();
         attrs := AttrArray();
@@ -59,6 +63,7 @@ create or replace type body DocElement as
         XML_LIST_NAME       := doc_utl.get_param('XML_LIST_NAME');
         JSON_ATTR_NODE      := doc_utl.get_param('JSON_ATTR_NODE');
         JSON_COMMENT        := doc_utl.get_param('JSON_COMMENT');
+        JSON_CDATA          := doc_utl.get_param('JSON_CDATA');
         JSON_NS_NODE        := doc_utl.get_param('JSON_NS_NODE');
         JSON_VAL_NAME       := doc_utl.get_param('JSON_VAL_NAME');
         IGNORE_XML_COMMENTS := doc_utl.get_param('IGNORE_XML_COMMENTS');
@@ -68,6 +73,7 @@ create or replace type body DocElement as
         val := eVal;
         vtype := doc_utl.val_type(val);
         comments := '';
+        cdata := '';
 
         elems := CompArray();
         attrs := AttrArray();
@@ -82,6 +88,7 @@ create or replace type body DocElement as
         doc_type integer:= doc_utl.doc_type(xDoc);
         tval     clob;
         nDoc     DocElement;
+        vDoc XMLType := xDoc;
     begin
 
         XML_ARRAY_NAME      := doc_utl.get_param('XML_ARRAY_NAME');
@@ -89,6 +96,7 @@ create or replace type body DocElement as
         XML_LIST_NAME       := doc_utl.get_param('XML_LIST_NAME');
         JSON_ATTR_NODE      := doc_utl.get_param('JSON_ATTR_NODE');
         JSON_COMMENT        := doc_utl.get_param('JSON_COMMENT');
+        JSON_CDATA          := doc_utl.get_param('JSON_CDATA');
         JSON_NS_NODE        := doc_utl.get_param('JSON_NS_NODE');
         JSON_VAL_NAME       := doc_utl.get_param('JSON_VAL_NAME');
         IGNORE_XML_COMMENTS := doc_utl.get_param('IGNORE_XML_COMMENTS');
@@ -98,6 +106,7 @@ create or replace type body DocElement as
         val := '';
         vtype := doc_utl.type_null;
         comments := '';
+        cdata := '';
 
         elems := CompArray();
         attrs := AttrArray();
@@ -108,10 +117,11 @@ create or replace type body DocElement as
             SELECT EXTRACT(xDoc, '/node()/comment()').getStringVal()
 	        into comments;
             comments := doc_utl.extractComments(comments);
+            cdata := doc_utl.extractCData(vDoc);
+            -- namespaces
+            -- attributes
         end if;
-        -- namespaces
-        -- attributes
-        for r in (select * from xmltable('/node()/@*' passing  xDoc
+        for r in (select * from xmltable('/node()/@*' passing  vDoc
                   columns node_name  clob path 'name()',
 		          node_value clob path '.')) loop
             attrs.extend;
@@ -121,35 +131,35 @@ create or replace type body DocElement as
         -- components
         if doc_type=doc_utl.doc_simple then
 
-            key := xDoc.getrootelement();
-            select extractvalue(xDoc,'/node()')
+            key := vDoc.getrootelement();
+            select extractvalue(vDoc,'/node()')
             into val;
             val := regexp_replace(val,'[[:space:]]');
             vtype := doc_utl.val_type(val);
         elsif doc_type=doc_utl.doc_complex then
             
-            if xDoc.getRootElement <> XML_LIST_NAME or KEEP_DOC_CONV_FMT = 'Y'  then
-                key := xDoc.getRootElement();
+            if vDoc.getRootElement <> XML_LIST_NAME or KEEP_DOC_CONV_FMT = 'Y'  then
+                key := vDoc.getRootElement();
             end if;
 
             -- text element --
-            select extractvalue(xDoc,'/node()/text()')
+            select extractvalue(vDoc,'/node()/text()')
             into tval;
             tval := regexp_replace(tval,'[[:space:]]');
-            
+            --tval := regexp_replace(tval,'<!\[CDATA\[ *(.*?) *\]\]>','',1,1);        
             if tval is not null then
                elems.extend;
                elems(elems.count) := DocElement(replace(tval,' ','')); 
             end if;
 
-            for r in (select * from TABLE(XMLSEQUENCE(EXTRACT(xDoc,'/node()/*')))) loop
+            for r in (select * from TABLE(XMLSEQUENCE(EXTRACT(vDoc,'/node()/*')))) loop
                 elems.extend;
                 elems(elems.count) := DocElement(r.column_value);
             end loop;
 
         elsif doc_type=doc_utl.doc_list then
 
-            for r in (select * from TABLE(XMLSEQUENCE(EXTRACT(xDoc,'/*')))) loop
+            for r in (select * from TABLE(XMLSEQUENCE(EXTRACT(vDoc,'/*')))) loop
                 elems.extend;
                 if r.column_value.getRootElement <> XML_ITEM_NAME or KEEP_DOC_CONV_FMT = 'Y' then 
                     elems(elems.count) := DocElement(r.column_value); 
@@ -161,11 +171,11 @@ create or replace type body DocElement as
             end loop;
 
         elsif doc_type=doc_utl.doc_array then
-            if xDoc.getRootElement <> XML_ARRAY_NAME or KEEP_DOC_CONV_FMT = 'Y' then
-                key := xDoc.getrootelement();
+            if vDoc.getRootElement <> XML_ARRAY_NAME or KEEP_DOC_CONV_FMT = 'Y' then
+                key := vDoc.getrootelement();
             end if;
 
-            for r in (select * from TABLE(XMLSEQUENCE(EXTRACT(xDoc,'/node()/*')))) loop   
+            for r in (select * from TABLE(XMLSEQUENCE(EXTRACT(vDoc,'/node()/*')))) loop   
                 array.extend;
                 if r.column_value.getRootElement <> XML_ITEM_NAME or KEEP_DOC_CONV_FMT = 'Y' then
                     array(array.count) := DocElement(r.column_value);
@@ -199,6 +209,7 @@ create or replace type body DocElement as
         XML_LIST_NAME       := doc_utl.get_param('XML_LIST_NAME');
         JSON_ATTR_NODE      := doc_utl.get_param('JSON_ATTR_NODE');
         JSON_COMMENT        := doc_utl.get_param('JSON_COMMENT');
+        JSON_CDATA          := doc_utl.get_param('JSON_CDATA');
         JSON_NS_NODE        := doc_utl.get_param('JSON_NS_NODE');
         JSON_VAL_NAME       := doc_utl.get_param('JSON_VAL_NAME');
         IGNORE_XML_COMMENTS := doc_utl.get_param('IGNORE_XML_COMMENTS');
@@ -210,6 +221,7 @@ create or replace type body DocElement as
         jDoc2 := jDoc;
         comments := doc_utl.extractComments(jDoc2);
         doc_type := doc_utl.doc_type(jDoc2);
+        cdata := '';
 
         elems := CompArray();
         attrs := AttrArray();
@@ -404,11 +416,11 @@ create or replace type body DocElement as
         elsif doc_type = doc_utl.doc_empty_val then
             res := '<'||key||attrsc||'></'||key||'>';
         elsif doc_type = doc_utl.doc_value then
-            res := '<'||XML_ITEM_NAME||'>'||getComments(doc_utl.fmt_xml)||val||'</'||XML_ITEM_NAME||'>';
+            res := '<'||XML_ITEM_NAME||'>'||getComments(doc_utl.fmt_xml)||getCdata(doc_utl.fmt_xml)||val||'</'||XML_ITEM_NAME||'>';
         elsif doc_type = doc_utl.doc_simple then
-            res := '<'||key||attrsc||'>'||getComments(doc_utl.fmt_xml)||val||'</'||key||'>';
+            res := '<'||key||attrsc||'>'||getComments(doc_utl.fmt_xml)||getCdata(doc_utl.fmt_xml)||val||'</'||key||'>';
         elsif doc_type = doc_utl.doc_complex then
-            res := '<'||key||attrsc||'>'||getComments(doc_utl.fmt_xml);
+            res := '<'||key||attrsc||'>'||getComments(doc_utl.fmt_xml)||getCdata(doc_utl.fmt_xml);
 
             for i in 1..elems.count loop
                 ned := treat(elems(i) as DocElement);
@@ -422,7 +434,7 @@ create or replace type body DocElement as
 
             res := res||'</'||key||'>';
         elsif doc_type = doc_utl.doc_array then
-            res := '<'||key||attrsc||'>'||getComments(doc_utl.fmt_xml);
+            res := '<'||key||attrsc||'>'||getComments(doc_utl.fmt_xml)||getCdata(doc_utl.fmt_xml);
             for i in 1..array.count loop  
                 ned := treat(array(i) as DocElement);
                 if ned.getElType = doc_utl.doc_list then
@@ -443,7 +455,7 @@ create or replace type body DocElement as
             else
                 res := '';
             end if;
-            res := res ||getComments(doc_utl.fmt_xml);
+            res := res ||getComments(doc_utl.fmt_xml)||getCdata(doc_utl.fmt_xml);
             for i in 1..elems.count loop
                 nel := treat(elems(i) as DocElement).getAsXML;                
                 res := res||nel.getclobval;
@@ -454,7 +466,7 @@ create or replace type body DocElement as
             end if;
 
         elsif doc_type = doc_utl.json_array then
-            res := '<'||XML_ARRAY_NAME||'>'||getComments(doc_utl.fmt_xml);
+            res := '<'||XML_ARRAY_NAME||'>'||getComments(doc_utl.fmt_xml)||getCdata(doc_utl.fmt_xml);
 
             for i in 1..array.count loop
                 ned := treat(array(i) as DocElement);
@@ -464,7 +476,7 @@ create or replace type body DocElement as
                     nelc := nel.getClobVal;
                 else
                     nel := ned.getAsXML;
-                    nelc := '<'||XML_ITEM_NAME||'>'||nel.getClobVal||'</'||XML_ITEM_NAME||'>';
+                    nelc := nel.getClobVal;
                 end if;        
                 res := res||nelc;
             end loop;
@@ -503,6 +515,9 @@ create or replace type body DocElement as
             if hasComments then
                 res := res||getComments(doc_utl.fmt_json)||',';
             end if;
+            if hasCData then
+                res := res||getCData(doc_utl.fmt_json)||',';
+            end if;
             res := res||'"'||key||'":null}';
         elsif doc_type = doc_utl.doc_value then
             if vtype <> doc_utl.type_number then
@@ -514,6 +529,9 @@ create or replace type body DocElement as
             res := '{';
             if hasComments then
                 res := res||getComments(doc_utl.fmt_json)||',';
+            end if;
+            if hasCData then
+                res := res||getCData(doc_utl.fmt_json)||',';
             end if;
             res := res||'"'||key||'":';
             if hasAttrs then
@@ -535,6 +553,9 @@ create or replace type body DocElement as
             res := '{';
             if hasComments then
                 res := res||getComments(doc_utl.fmt_json)||',';
+            end if;
+            if hasCData then
+                res := res||getCData(doc_utl.fmt_json)||',';
             end if;
             res := res||'"'||key||'":{';
             if hasAttrs then
@@ -566,6 +587,9 @@ create or replace type body DocElement as
             if hasComments then
                 res := res||getComments(doc_utl.fmt_json)||',';
             end if;
+            if hasCData then
+                res := res||getCData(doc_utl.fmt_json)||',';
+            end if;
             if hasAttrs then
                 res := res || attrsc||',';
             end if;
@@ -594,6 +618,9 @@ create or replace type body DocElement as
             res := '{';
             if hasComments then
                 res := res||getComments(doc_utl.fmt_json)||',';
+            end if;
+            if hasCData then
+                res := res||getCData(doc_utl.fmt_json)||',';
             end if;
             if hasAttrs then
                 res := res || attrsc||',';
@@ -862,6 +889,38 @@ create or replace type body DocElement as
     is
     begin   
         comments := '';
+    end;
+
+    member function hasCData return boolean
+    is
+    begin
+        if cdata is not null then
+            return true;
+        end if;
+        return false;
+    end;
+
+    member function getCData(fmt integer) return clob
+    is
+    begin
+        if fmt = doc_utl.fmt_xml and hasCData then
+            return '<![CDATA['||cdata||']]>';
+        elsif fmt = doc_utl.fmt_json and hasCData then
+            return '"'||JSON_CDATA||'":"'||cdata||'"';
+        end if;
+        return '';
+    end;  
+
+    member procedure addCData(ncdata clob)
+    is
+    begin
+        cdata := cdata||' '||ncdata;
+    end;
+
+    member procedure delCData
+    is
+    begin
+        cdata := '';
     end;
 
     member procedure setParameter(pName varchar2, pValue varchar2)

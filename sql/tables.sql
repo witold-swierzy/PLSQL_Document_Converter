@@ -26,6 +26,9 @@ insert into doc_params values
 ( 'JSON_COMMENT','_dc_comment_');
 
 insert into doc_params values
+( 'JSON_CDATA', '_dc_data_');
+
+insert into doc_params values
 ( 'IGNORE_XML_COMMENTS','N');
 
 insert into doc_params values

@@ -1,4 +1,5 @@
 -- basic document manipulation
+-- requirements: HR demo schema
 drop table if exists dept_xml_table;
 
 create table dept_xml_table

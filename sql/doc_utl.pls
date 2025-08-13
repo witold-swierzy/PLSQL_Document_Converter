@@ -39,5 +39,7 @@ is
     function extractComments(xmlComments clob)    return clob;
     function extractComments(jDoc in out JSON_ELEMENT_T,
                              pCommentKey varchar2 := params('JSON_COMMENT')) return clob;
+    
+    function extractCData(xDoc in out XMLType) return clob;
 end;
 /

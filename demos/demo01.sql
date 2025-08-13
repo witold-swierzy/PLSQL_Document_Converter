@@ -34,8 +34,10 @@ from emp_json_view;
 
 mongosh :
 db.emp_json_view.find()
-db.emp_json_view.find({"employee.salary":2500})
-db.emp_json_view.find({"employee.salary":2500}).explain()
+db.emp_json_view.find({"SALARY":6200})
+db.emp_json_view.find({"SALARY":6200}).explain()
+
+
 
 
  

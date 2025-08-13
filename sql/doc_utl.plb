@@ -147,6 +147,17 @@ is
         return v_comments;
     end;
 
+    function extractCData(xDoc in out XMLType) return clob
+    is
+        xc clob := xDoc.getclobval;
+        cd clob := regexp_substr(xc, '<!\[CDATA\[ *(.*?) *\]\]>',1,1);
+        xd clob := xDoc.getclobval;
+    begin
+        xd := replace(xd,cd,'');
+        xDoc := XMLType(xd);
+        return substr(cd,10,length(cd)-12);
+    end;
+
 begin
     doc_types(-1) := 'doc_unknown';
     doc_types(0)  := 'doc_empty';

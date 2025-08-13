@@ -7,6 +7,7 @@ create or replace type DocElement under DocComponent (
     JSON_NS_NODE        varchar2(2000),
     JSON_VAL_NAME       varchar2(2000),
     JSON_COMMENT        varchar2(2000),
+    JSON_CDATA          varchar2(2000),
     IGNORE_XML_COMMENTS varchar2(2000),
     KEEP_DOC_CONV_FMT   varchar2(2000),
 
@@ -16,6 +17,7 @@ create or replace type DocElement under DocComponent (
     elems CompArray,
     attrs AttrArray,
     array CompArray,
+    cdata clob,
     comments clob,
     xns clob,
     xsd clob,
@@ -66,6 +68,11 @@ create or replace type DocElement under DocComponent (
     member function getComments (fmt integer) return clob,
     member procedure addComment (comment clob),
     member procedure delComments,
+
+    member function hasCData return boolean,
+    member function getCData(fmt integer) return clob,
+    member procedure addCData(ncdata clob),
+    member procedure delCData,
 
     member procedure setParameter(pName varchar2, pValue varchar2),
 

@@ -4,7 +4,7 @@ set serveroutput on
 
 declare
 	de DocElement := DocElement.getArray('select * from hr.employees '||
-                                             'where department_id = 90','EMP_90','EMPLOYEE');
+                                         'where department_id = 90','EMP_90','EMPLOYEE');
 	dx XMLType;
 	dj JSON_ELEMENT_T;
 begin
@@ -83,3 +83,9 @@ begin
 	end loop;	
 end;
 /
+
+select xmltojson(XMLType('<a><![CDATA[characters with markup]]><b attrb="valb">aaa</b><b>ccc</b></a>'))
+select doc_conv.xml2json(XMLType('<a><b attrb="valb">aaa</b><b>ccc</b></a>'))
+select jsontoxml(json{*}) from hr.departments;
+select doc_conv.json2xml(json{*}) from hr.departments;
+
