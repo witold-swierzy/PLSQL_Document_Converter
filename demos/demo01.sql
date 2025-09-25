@@ -1,5 +1,6 @@
 -- this demo demonstrates basic functionality of Document Conversion API
--- requirements: HR sample schema
+-- requirements: DEPARTMENTS and EMPLOYEES tables taken from HR sample schema
+
 drop table if exists emp_xml_table;
 
 create table emp_xml_table OF XMLType
@@ -9,7 +10,7 @@ select XMLElement("Emp",
                     		   e.first_name AS "first_name",
                                e.last_name AS "last_name",
                                e.hire_date AS "hiredate"))
-"result" FROM hr.employees e;
+"result" FROM employees e;
 
 -- alternative
 drop table if exists emp_xml_table;
@@ -17,7 +18,7 @@ drop table if exists emp_xml_table;
 create table emp_xml_table of XMLType
 as
 select doc_conv.json2xml(JSON{*}) employee
-from hr.employees;
+from employees;
 --
 select * from emp_xml_table;    
 

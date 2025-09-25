@@ -1,13 +1,13 @@
--- this demo demonstrates comments and attributes support 
--- requirements: HR sample schema
+-- this demo demonstrates comments,cdata  and attributes support 
+-- requirements: DEPARTMENTS and EMPLOYEES tables taken from HR sample schema
 
--- 1. Comments
+-- 1. Comments and cdata
 drop table if exists dept_xml_table;
 
 create table dept_xml_table
 as
 select department_id, doc_conv.json2xml(JSON{*}) department
-from hr.departments;
+from departments;
 
 select *
 from dept_xml_table;
@@ -50,6 +50,9 @@ from dept_json_view;
 
 select doc_conv.json2xml(data)
 from dept_json_view;
+
+select xmltojson(XMLType('<a><![CDATA[characters with markup]]><b attrb="valb">aaa</b><b>ccc</b></a>'));
+select doc_conv.xml2json(XMLType('<a><![CDATA[characters with markup]]><b attrb="valb">aaa</b><b>ccc</b></a>'));
 
 -- 2.Attributes
 declare

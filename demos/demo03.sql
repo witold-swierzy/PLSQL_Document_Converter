@@ -1,9 +1,9 @@
--- arrays
--- requires HR sample schema
+-- arrays, aggregations
+-- based on DEPARTMENTS and EMPLOYEES tables
 set serveroutput on
 
 declare
-	de DocElement := DocElement.getArray('select * from hr.employees '||
+	de DocElement := DocElement.getArray('select * from employees '||
                                          'where department_id = 90','EMP_90','EMPLOYEE');
 	dx XMLType;
 	dj JSON_ELEMENT_T;
@@ -37,11 +37,11 @@ declare
 begin
 	dept_emp_de.setRootKey('DEPARTMENTS');
 
-	for rd in (select JSON{*} dept from hr.departments) loop
+	for rd in (select JSON{*} dept from departments) loop
 		dept_de := DocElement(JSON_ELEMENT_T.parse(JSON_SERIALIZE(rd.dept)));
 		dept_de.setRootKey('DEPARTMENT');
 		dept_id := dept_de.getElement('DEPARTMENT_ID');
-		emp_de := DocElement.getArray('select * from hr.employees where department_id = '||dept_id.val,'EMPLOYEES','EMP');
+		emp_de := DocElement.getArray('select * from employees where department_id = '||dept_id.val,'EMPLOYEES','EMP');
 
 		if emp_de is not null then
 			dept_de.addElement(emp_de);			
@@ -75,7 +75,7 @@ begin
 	for rd in (select JSON{*} dept from hr.departments) loop
 		dept_de := DocElement(JSON_ELEMENT_T.parse(JSON_SERIALIZE(rd.dept)));
 		dept_de.setRootKey('DEPARTMENT');
-		dept_de.aggregate('HR.EMPLOYEES','DEPARTMENT_ID');
+		dept_de.aggregate('EMPLOYEES','DEPARTMENT_ID');
 		jd := dept_de.getAsJSON;
 		xd := dept_de.getAsXML;
 		dbms_output.put_line(jd.to_String);
@@ -84,8 +84,5 @@ begin
 end;
 /
 
-select xmltojson(XMLType('<a><![CDATA[characters with markup]]><b attrb="valb">aaa</b><b>ccc</b></a>'))
-select doc_conv.xml2json(XMLType('<a><b attrb="valb">aaa</b><b>ccc</b></a>'))
-select jsontoxml(json{*}) from hr.departments;
-select doc_conv.json2xml(json{*}) from hr.departments;
+
 

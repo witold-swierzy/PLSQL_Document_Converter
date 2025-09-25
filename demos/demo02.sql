@@ -1,11 +1,16 @@
 -- basic document manipulation
 -- requirements: HR demo schema
+-- displaying XML data
+-- setting programmatically ROOT element of a document
+-- removing an element
+-- adding an element being a result of an aggregation
+
 drop table if exists dept_xml_table;
 
 create table dept_xml_table
 as
 select department_id, doc_conv.json2xml(JSON{*}) department
-from hr.departments;
+from departments;
 
 select *
 from dept_xml_table;
@@ -67,6 +72,7 @@ declare
 	de DocElement;
 	nde DocElement;
 	NofEMPS integer;
+	i number(10);
 begin
 	for r_dept in c_dept loop
 		de := DocElement(r_dept.department);
@@ -74,14 +80,15 @@ begin
 				
 		select count(*)
 		into NofEMPS
-		from hr.employees
+		from employees
 		where department_id = to_char(nde.val);
 		
 		de.addElement('NO_OF_EMPS',to_clob(NofEMPS));
-		
+				
 		update dept_xml_table
 		set department = de.getAsXML
 		where current of c_dept;
+			
 	end loop;
 	commit;
 end;
