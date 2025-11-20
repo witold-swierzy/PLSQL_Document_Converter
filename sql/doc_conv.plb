@@ -31,6 +31,18 @@ is
         return json_element_t2xml(jd);
     end;
 
+    function json2json_element_t(jDoc JSON) return JSON_ELEMENT_T
+    is
+    begin
+        return JSON_ELEMENT_T.load(jDoc);
+    end;
+    
+    function json_element_t2json(jDoc JSON_ELEMENT_T) return JSON
+    is
+    begin
+        return jDoc.to_JSON;
+    end;
+
     function get_param(p_name varchar2) return varchar2
     is
     begin
